@@ -2,19 +2,21 @@ from unittest import TestCase
 from BeautifulSoup import BeautifulStoneSoup
 import sys
 sys.path.append('..')
+
+from support import open_file
 from ofx_parse import *
+
 
 class TestParse(TestCase):
     def testThatParseWorksWithoutErrors(self):
-        ofx = OfxParser.parse(file('fixtures/bank_small.ofx'))
-        ofx = OfxParser.parse(file('fixtures/bank_medium.ofx'))
+        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
     
     def testThatParseReturnsAResultWithABankAccount(self):
-        ofx = OfxParser.parse(file('fixtures/bank_medium.ofx'))
+        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertTrue(ofx.bank_account != None)
     
     def testEverything(self):
-        ofx = OfxParser.parse(file('fixtures/bank_medium.ofx'))
+        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertEquals('12300 000012345678', ofx.bank_account.number)
         self.assertEquals('160000100', ofx.bank_account.routing_number)
         self.assertEquals('382.34', ofx.bank_account.statement.balance)
