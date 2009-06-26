@@ -1,8 +1,8 @@
-python-ofx: ofx utilities for python
+ofxparse: ofx utilities for python
 
 Example usage:
 
-from ofx_parse import OfxParser
+from ofxparse import OfxParser
 
 ofx = OfxParser.parse(file('file.ofx'))
 ofx.account                         # An account with information
@@ -101,13 +101,8 @@ Design:
  Institute
 
  
- License:
- Todo: Figure out what license to release this software with
- I have been recommended the MIT or LGPL licenses
+Homepage:
+http://github.com/jseutter/ofxparse/tree/master
+Note to self: Also look at using google code with google sites for the web stuff.
  
- Homepage:
- Todo: Figure out where to host this software
- I have been recommended GitHub over Google Code
- Also look at using google code with google sites for the web stuff - note, no git on Google.
- 
- 
+ofxparse is released under an MIT license.
