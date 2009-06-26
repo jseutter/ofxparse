@@ -15,7 +15,7 @@ setup(name='ofxparse',
           "Operating System :: OS Independent",
           "Programming Language :: Python",
           "Topic :: Software Development :: Libraries :: Python Modules",
-          "Topic :: Utilities"
+          "Topic :: Utilities",
           "License :: OSI Approved :: MIT License",
           ],
       keywords='ofx, Open Financial Exchange, file formats',
