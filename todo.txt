@@ -1,0 +1,8 @@
+- Add support for account types
+   Account - BankAccount, CreditAccount, InvestmentAccount
+   
+- Better documentation
+   Statement
+   Transaction
+   Institute
+

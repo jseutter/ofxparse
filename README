@@ -16,27 +16,12 @@ ofx.account.statement.balance       # The money in the account as of the stateme
 ofx.account.statement.available_balance # The money available from the account as of the statement date
 
 
-Requirements:
-- The library will parse all elements of my PCF bank account statement.
-- The library will pass all unit tests.
-- The library will be packaged as a distutils package
-- The library will run on Python 2.5.1 on os x.
-- The library will have a well-defined API.
-- The library will be released under the same license as Python.
-- The library will be hosted on a popular hosting service using git.
-- The library will be supported with a mailing list.
-- The library will be available on the Python Package Index.
-
- ========================
- 
- Account - BankAccount, CreditAccount, InvestmentAccount
- Statement
- Transaction
- Institute
+Help!
+I'm looking for different types of accounts to make this library more robust.  I'm looking for sample
+credit account or investment account files.  Please (anonymize first) and mail to jseutter dot ofxparse
+at gmail dot com.
 
  
-Homepage:
-http://github.com/jseutter/ofxparse/tree/master
-Note to self: Also look at using google code with google sites for the web stuff.
+Homepage: http://github.com/jseutter/ofxparse/tree/master
  
 ofxparse is released under an MIT license.
