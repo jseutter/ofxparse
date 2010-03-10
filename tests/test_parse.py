@@ -4,7 +4,7 @@ import sys
 sys.path.append('..')
 
 from support import open_file
-from ofx_parse import *
+from ofxparse import *
 
 
 class TestParse(TestCase):
