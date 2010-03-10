@@ -32,4 +32,6 @@ setup(name='ofxparse',
       ],
       entry_points="""
       """,
+      use_2to3 = True,
+      test_suite = 'tests',
       )
