@@ -1,28 +1,51 @@
-ofxparse: ofx utilities for python
+ofxparse
+========
 
-Example usage:
+ofxparse is a parser for Open Financial Exchange (.ofx) format files.  OFX files
+are available from almost any online banking site, so they work well if you 
+want to pull together your finances from multiple sources.  Online trading accounts
+also provide account statements in OFX files.
 
-from ofxparse import OfxParser
+There are three different types of OFX files.  This library has been tested with
+BankAccount files.  The other two types, CreditAccount and InvestmentAccount have
+not been tested.  If you have a sample of these other types that could be used to
+help this project, please see the Help! section below.
 
-ofx = OfxParser.parse(file('file.ofx'))
-ofx.account                         # An account with information
-ofx.account.number                  # The account number
-ofx.account.routing_number          # The transit id (sometimes called branch number)
-ofx.account.statement               # Account information for a period of time
-ofx.account.statement.start_date    # The start date of the transactions
-ofx.account.statement.end_date      # The end date of the transactions
-ofx.account.statement.transactions  # A list of account activities
-ofx.account.statement.balance       # The money in the account as of the statement date
-ofx.account.statement.available_balance # The money available from the account as of the statement date
+Example Usage
+=============
 
+Here's a sample program::
+
+  from ofxparse import OfxParser
+
+  ofx = OfxParser.parse(file('file.ofx'))
+  ofx.account                         # An account with information
+  ofx.account.number                  # The account number
+  ofx.account.routing_number          # The transit id (sometimes called branch number)
+  ofx.account.statement               # Account information for a period of time
+  ofx.account.statement.start_date    # The start date of the transactions
+  ofx.account.statement.end_date      # The end date of the transactions
+  ofx.account.statement.transactions  # A list of account activities
+  ofx.account.statement.balance       # The money in the account as of the statement date
+  ofx.account.statement.available_balance # The money available from the account as of the statement date
 
 Help!
+=====
+
 I'm looking for different types of accounts to make this library more robust.  I'm looking for sample
 credit account or investment account files.  Please (anonymize first) and mail to jseutter dot ofxparse
 at gmail dot com.
 
- 
-Homepage: http://github.com/jseutter/ofxparse/tree/master
- 
-ofxparse is released under an MIT license.  See the LICENSE file for the actual license text.
+
+Homepage
+========
+http://github.com/jseutter/ofxparse/tree/master
+
+License
+=======
+
+ofxparse is released under an MIT license.  See the LICENSE file for the actual 
+license text.  The basic idea is that if you can use Python to do what you are
+doing, you can also use this library.
+
 
