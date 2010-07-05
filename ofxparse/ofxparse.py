@@ -30,6 +30,8 @@ class Institution(object):
 class OfxParser(object):
     @classmethod
     def parse(cls_, file_handle):
+        if isinstance(file_handle, type('')):
+            raise RuntimeError("parse() takes in a file handle, not a string")
         ofx_obj = Ofx()
         ofx = BeautifulStoneSoup(file_handle)
         stmtrs_ofx = ofx.find('stmtrs')

@@ -10,6 +10,13 @@ from ofxparse import *
 class TestParse(TestCase):
     def testThatParseWorksWithoutErrors(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
+
+    def testThatParseFailsIfNothingToParse(self):
+        self.assertRaises(TypeError, OfxParser.parse, None)
+
+    def testThatParseFailsIfAPathIsPassedIn(self):
+        # A file handle should be passed in, not the path.
+        self.assertRaises(RuntimeError, OfxParser.parse, '/foo/bar')
     
     def testThatParseReturnsAResultWithABankAccount(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
