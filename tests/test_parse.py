@@ -5,6 +5,66 @@ sys.path.append('..')
 
 from support import open_file
 from ofxparse import *
+from ofxparse.ofxparse import OfxFile
+from StringIO import StringIO
+
+
+class TestOfxFile(TestCase):
+    def testHeaders(self):
+        expect = { "OFXHEADER": u"100",
+                   "DATA": u"OFXSGML",
+                   "VERSION": u"102",
+                   "SECURITY": None,
+                   "ENCODING": u"USASCII",
+                   "CHARSET": u"1252",
+                   "COMPRESSION":None,
+                   "OLDFILEUID": None,
+                   "NEWFILEUID": None,
+                   }
+        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
+        self.assertEquals(expect, ofx.headers)
+
+
+    def testUTF8(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+""")
+        ofx_file = OfxFile(fh)
+        headers = ofx_file.headers
+        data = ofx_file.fh.read()
+        
+        self.assertTrue(type(data) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
+
+
+    def testCP1252(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET: 1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+""")
+        ofx_file = OfxFile(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+        
+        self.assertTrue(type(result) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
 
 
 class TestParse(TestCase):

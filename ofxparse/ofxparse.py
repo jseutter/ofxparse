@@ -1,4 +1,64 @@
 from BeautifulSoup import BeautifulStoneSoup
+import codecs
+
+class OfxFile(object):
+    def __init__(self, fh):
+        self.headers = {}
+        self.fh = fh
+        self.read_headers()
+
+    def read_headers(self):
+        if not hasattr(self.fh, "seek") or not hasattr(self.fh, "next"):
+            return # fh is not a file object, we're doomed.
+
+        orig_pos = self.fh.tell()
+        self.fh.seek(0)
+        
+        for line in self.fh:
+            # Newline?
+            if line.strip() == "":
+                break
+            
+            header, value = line.split(":")
+            header, value = header.strip().upper(), value.strip()
+
+            if value.upper() == "NONE":
+                value = None
+
+            self.headers[header] = value
+            
+        # Look for the encoding
+        enc_type = self.headers.get("ENCODING")
+        if enc_type:
+            encoding = None # Unknown
+
+            if enc_type == "USASCII":
+                cp = self.headers.get("CHARSET", "1252")
+                encoding = "cp%s" % (cp, )
+
+            elif enc_type == "UNICODE":
+                encoding = "utf-8"
+            
+            try:
+                codec = codecs.lookup(encoding)
+            except LookupError:
+                encoding = None
+
+            if encoding:
+                self.fh = codec.streamreader(self.fh)
+
+                # Decode the headers
+                uheaders = {}
+                for key,value in self.headers.iteritems():
+                    key = key.decode(encoding)
+
+                    if type(value) is str:
+                        value = value.decode(encoding)
+                    
+                    uheaders[key] = value
+                self.headers = uheaders
+        # Reset the fh to the original position
+        self.fh.seek(orig_pos)
 
 class Ofx(object):
     pass
@@ -32,8 +92,14 @@ class OfxParser(object):
     def parse(cls_, file_handle):
         if isinstance(file_handle, type('')):
             raise RuntimeError("parse() takes in a file handle, not a string")
+
         ofx_obj = Ofx()
-        ofx = BeautifulStoneSoup(file_handle)
+
+        # Store the headers
+        ofx_file = OfxFile(file_handle)
+        ofx_obj.headers = ofx_file.headers
+
+        ofx = BeautifulStoneSoup(ofx_file.fh)
         stmtrs_ofx = ofx.find('stmtrs')
         if stmtrs_ofx:
             ofx_obj.bank_account = cls_.parseStmtrs(stmtrs_ofx)
