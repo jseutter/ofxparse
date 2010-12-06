@@ -37,6 +37,9 @@ class OfxParser(object):
         stmtrs_ofx = ofx.find('stmtrs')
         if stmtrs_ofx:
             ofx_obj.bank_account = cls_.parseStmtrs(stmtrs_ofx)
+        ccstmtrs_ofx = ofx.find('ccstmtrs')
+        if ccstmtrs_ofx:
+            ofx_obj.credit_card_account = cls_.parseStmtrs(ccstmtrs_ofx)
         return ofx_obj
 
     @classmethod
