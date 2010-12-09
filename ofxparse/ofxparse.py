@@ -1,5 +1,5 @@
 from BeautifulSoup import BeautifulStoneSoup
-import decimal
+import decimal, datetime
 
 class Ofx(object):
     pass
@@ -77,6 +77,13 @@ class OfxParser(object):
         return ofx_obj
     
     @classmethod
+    def parseOfxDateTime(cls_, ofxDateTime):
+        #dateAsString looks like 20101106160000.00[-5:EST]
+        #for 6 Nov 2010 4pm UTC-5 aka EST
+        timeZoneOffset = datetime.timedelta(hours=int(ofxDateTime[19:].split(':')[0]))
+        return datetime.datetime.strptime(ofxDateTime[:18], '%Y%m%d%H%M%S.%f') - timeZoneOffset
+
+    @classmethod
     def parseInvstmtrs(cls_, invstmtrs_ofx):
         account = InvestmentAccount()
         acctid_tag = invstmtrs_ofx.find('acctid')
@@ -102,6 +109,9 @@ class OfxParser(object):
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
             position.unit_price = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('dtpriceasof')
+        if (hasattr(tag, 'contents')):
+            position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
         return position
 
     @classmethod
@@ -121,6 +131,12 @@ class OfxParser(object):
     @classmethod
     def parseInvestmentStatement(cls_, invstmtrs_ofx):
         statement = InvestmentStatement()
+        tag = invstmtrs_ofx.find('dtstart')
+        if (hasattr(tag, 'contents')):
+            statement.start_date = cls_.parseOfxDateTime(tag.contents[0].strip())
+        tag = invstmtrs_ofx.find('dtend')
+        if (hasattr(tag, 'contents')):
+            statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
         for position_ofx in invstmtrs_ofx.findAll("posmf"):
             statement.positions.append(cls_.parseInvestmentPosition(position_ofx))
         for transaction_ofx in invstmtrs_ofx.findAll("buymf"):
@@ -150,10 +166,10 @@ class OfxParser(object):
         statement = Statement()
         dtstart_tag = stmt_ofx.find('dtstart')
         if hasattr(dtstart_tag, "contents"):
-            statement.start_date = dtstart_tag.contents[0].strip()
+            statement.start_date = cls_.parseOfxDateTime(dtstart_tag.contents[0].strip())
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
-            statement.end_date = dtend_tag.contents[0].strip()
+            statement.end_date = cls_.parseOfxDateTime(dtend_tag.contents[0].strip())
         ledger_bal_tag = stmt_ofx.find('ledgerbal')
         if hasattr(ledger_bal_tag, "contents"):
             balamt_tag = ledger_bal_tag.find('balamt')
@@ -193,7 +209,7 @@ class OfxParser(object):
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
-            transaction.date = date_tag.contents[0].strip()
+            transaction.date = cls_.parseOfxDateTime(date_tag.contents[0].strip())
 
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
