@@ -1,6 +1,7 @@
 from BeautifulSoup import BeautifulStoneSoup
 import decimal, datetime
 import codecs
+import re
 
 class OfxFile(object):
     def __init__(self, fh):
@@ -144,10 +145,19 @@ class OfxParser(object):
     
     @classmethod
     def parseOfxDateTime(cls_, ofxDateTime):
-        #dateAsString looks like 20101106160000.00[-5:EST]
+        #dateAsString looks something like 20101106160000.00[-5:EST]
         #for 6 Nov 2010 4pm UTC-5 aka EST
-        timeZoneOffset = datetime.timedelta(hours=int(ofxDateTime[19:].split(':')[0]))
-        return datetime.datetime.strptime(ofxDateTime[:18], '%Y%m%d%H%M%S.%f') - timeZoneOffset
+        res = re.match("^.*\[(?P<tz>-?\d{1,2})\:\w*\]", ofxDateTime)
+        tz = 0
+        if res:
+            tz = int(res.group('tz'))
+
+        timeZoneOffset = datetime.timedelta(hours=tz)
+
+        try:
+            return datetime.datetime.strptime(ofxDateTime[:14], '%Y%m%d%H%M%S') - timeZoneOffset
+        except:
+            return datetime.datetime.strptime(ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
 
     @classmethod
     def parseInvstmtrs(cls_, invstmtrs_ofx):
