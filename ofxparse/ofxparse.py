@@ -68,17 +68,12 @@ class Ofx(object):
 class Account(object):
     def __init__(self):
         self.statement = None
-
-class BankAccount(Account):
-    def __init__(self):
-        Account.__init__(self)
         self.number = ''
         self.routing_number = ''
     
 class InvestmentAccount(Account):
     def __init__(self):
-        Account.__init__(self)
-        self.number = ''
+        super(InvestmentAccount, self).__init__(self)
         self.brokerid = ''
 
 class Statement(object):
@@ -223,7 +218,7 @@ class OfxParser(object):
     @classmethod
     def parseStmtrs(cls_, stmtrs_ofx):
         ''' Parse the <STMTRS> tag and return an Account object. '''
-        account = BankAccount()
+        account = Account()
         acctid_tag = stmtrs_ofx.find('acctid')
         if hasattr(acctid_tag, 'contents'):
             account.number = acctid_tag.contents[0].strip()

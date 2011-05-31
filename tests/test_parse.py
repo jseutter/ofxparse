@@ -7,6 +7,7 @@ from support import open_file
 from ofxparse import *
 from ofxparse.ofxparse import OfxFile
 from StringIO import StringIO
+from datetime import datetime, timedelta
 
 
 class TestOfxFile(TestCase):
@@ -80,22 +81,22 @@ class TestParse(TestCase):
     
     def testThatParseReturnsAResultWithABankAccount(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
-        self.assertTrue(ofx.bank_account != None)
+        self.assertTrue(ofx.account != None)
     
     def testEverything(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
-        self.assertEquals('12300 000012345678', ofx.bank_account.number)
-        self.assertEquals('160000100', ofx.bank_account.routing_number)
-        self.assertEquals('382.34', ofx.bank_account.statement.balance)
+        self.assertEquals('12300 000012345678', ofx.account.number)
+        self.assertEquals('160000100', ofx.account.routing_number)
+        self.assertEquals('382.34', ofx.account.statement.balance)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', ofx.bank_account.statement.balance_in_pennies)
-        self.assertEquals('682.34', ofx.bank_account.statement.available_balance)
-        self.assertEquals('20090401', ofx.bank_account.statement.start_date)
-        self.assertEquals('20090523122017', ofx.bank_account.statement.end_date)
+        self.assertEquals('682.34', ofx.account.statement.available_balance)
+        self.assertEquals(datetime(2009, 4, 1), ofx.account.statement.start_date)
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), ofx.account.statement.end_date)
         
-        self.assertEquals(3, len(ofx.bank_account.statement.transactions))
+        self.assertEquals(3, len(ofx.account.statement.transactions))
         
-        transaction = ofx.bank_account.statement.transactions[0]
+        transaction = ofx.account.statement.transactions[0]
         self.assertEquals("MCDONALD'S #112", transaction.payee)
         self.assertEquals('pos', transaction.type)
         self.assertEquals('-6.60', transaction.amount)
@@ -139,8 +140,8 @@ class TestParseStatement(TestCase):
         '''
         txn = BeautifulStoneSoup(input)
         statement = OfxParser.parseStatement(txn.find('stmttrnrs'))
-        self.assertEquals('20090401', statement.start_date)
-        self.assertEquals('20090523122017', statement.end_date)
+        self.assertEquals(datetime(2009, 4, 1), statement.start_date)
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), statement.end_date)
         self.assertEquals(1, len(statement.transactions))
         self.assertEquals('382.34', statement.balance)
         self.assertEquals('682.34', statement.available_balance)
@@ -160,7 +161,7 @@ class TestParseTransaction(TestCase):
         txn = BeautifulStoneSoup(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('pos', transaction.type)
-        self.assertEquals('20090401122017.000[-5:EST]', transaction.date)
+        self.assertEquals(datetime(2009, 4, 1, 12, 20, 17) - timedelta(hours=-5), transaction.date)
         self.assertEquals('-6.60', transaction.amount)
         self.assertEquals('0000123456782009040100001', transaction.id)
         self.assertEquals("MCDONALD'S #112", transaction.payee)
