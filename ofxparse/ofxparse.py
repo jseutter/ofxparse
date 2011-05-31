@@ -147,10 +147,11 @@ class OfxParser(object):
     def parseOfxDateTime(cls_, ofxDateTime):
         #dateAsString looks something like 20101106160000.00[-5:EST]
         #for 6 Nov 2010 4pm UTC-5 aka EST
-        res = re.match("^.*\[(?P<tz>-?\d{1,2})\:\w*\]", ofxDateTime)
-        tz = 0
+        res = re.search("\[(?P<tz>-?\d+)\:\w*\]$", ofxDateTime)
         if res:
             tz = int(res.group('tz'))
+        else:
+            tz = 0
 
         timeZoneOffset = datetime.timedelta(hours=tz)
 
