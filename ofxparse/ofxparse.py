@@ -16,7 +16,10 @@ class OfxFile(object):
         orig_pos = self.fh.tell()
         self.fh.seek(0)
         
-        for line in self.fh:
+        head_data = self.fh.read(1024*10)
+        head_data = head_data[:head_data.find('<')]
+        
+        for line in re.split('\r?\n?', head_data):
             # Newline?
             if line.strip() == "":
                 break

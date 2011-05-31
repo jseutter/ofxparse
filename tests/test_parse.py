@@ -67,6 +67,10 @@ NEWFILEUID:NONE
             self.assertTrue(type(key) is unicode)
             self.assertTrue(type(value) is not str)
 
+    def testBrokenLineEndings(self):
+        fh = StringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        ofx_file = OfxFile(fh)
+        self.assertEquals(len(ofx_file.headers.keys()), 2)
 
 class TestParse(TestCase):
     def testThatParseWorksWithoutErrors(self):
