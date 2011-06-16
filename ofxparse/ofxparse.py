@@ -20,6 +20,12 @@ class InvestmentAccount(Account):
         self.number = ''
         self.brokerid = ''
 
+class Security:
+    def __init__(self, uniqueid, name, ticker):
+        self.uniqueid = uniqueid
+        self.name = name
+        self.ticker = ticker
+
 class Statement(object):
     def __init__(self):
         self.start_date = ''
@@ -70,7 +76,7 @@ class OfxParser(object):
         if ccstmtrs_ofx:
             ofx_obj.account = cls_.parseStmtrs(ccstmtrs_ofx)
             return ofx_obj
-        invstmtrs_ofx = ofx.find('invstmtrs')
+        invstmtrs_ofx = ofx.find('invstmtmsgsrsv1')
         if invstmtrs_ofx:
             ofx_obj.account = cls_.parseInvstmtrs(invstmtrs_ofx)
             return ofx_obj
@@ -80,7 +86,10 @@ class OfxParser(object):
     def parseOfxDateTime(cls_, ofxDateTime):
         #dateAsString looks like 20101106160000.00[-5:EST]
         #for 6 Nov 2010 4pm UTC-5 aka EST
-        timeZoneOffset = datetime.timedelta(hours=int(ofxDateTime[19:].split(':')[0]))
+        if (len(ofxDateTime) > 18):
+            timeZoneOffset = datetime.timedelta(hours=int(ofxDateTime[19:].split(':')[0]))
+        else:
+            timeZoneOffset = datetime.timedelta(0)
         return datetime.datetime.strptime(ofxDateTime[:18], '%Y%m%d%H%M%S.%f') - timeZoneOffset
 
     @classmethod
