@@ -1,5 +1,69 @@
 from BeautifulSoup import BeautifulStoneSoup
 import decimal, datetime
+import codecs
+import re
+
+class OfxFile(object):
+    def __init__(self, fh):
+        self.headers = {}
+        self.fh = fh
+        self.read_headers()
+
+    def read_headers(self):
+        if not hasattr(self.fh, "seek") or not hasattr(self.fh, "next"):
+            return # fh is not a file object, we're doomed.
+
+        orig_pos = self.fh.tell()
+        self.fh.seek(0)
+        
+        head_data = self.fh.read(1024*10)
+        head_data = head_data[:head_data.find('<')]
+        
+        for line in re.split('\r?\n?', head_data):
+            # Newline?
+            if line.strip() == "":
+                break
+            
+            header, value = line.split(":")
+            header, value = header.strip().upper(), value.strip()
+
+            if value.upper() == "NONE":
+                value = None
+
+            self.headers[header] = value
+            
+        # Look for the encoding
+        enc_type = self.headers.get("ENCODING")
+        if enc_type:
+            encoding = None # Unknown
+
+            if enc_type == "USASCII":
+                cp = self.headers.get("CHARSET", "1252")
+                encoding = "cp%s" % (cp, )
+
+            elif enc_type == "UNICODE":
+                encoding = "utf-8"
+            
+            try:
+                codec = codecs.lookup(encoding)
+            except LookupError:
+                encoding = None
+
+            if encoding:
+                self.fh = codec.streamreader(self.fh)
+
+                # Decode the headers
+                uheaders = {}
+                for key,value in self.headers.iteritems():
+                    key = key.decode(encoding)
+
+                    if type(value) is str:
+                        value = value.decode(encoding)
+                    
+                    uheaders[key] = value
+                self.headers = uheaders
+        # Reset the fh to the original position
+        self.fh.seek(orig_pos)
 
 class Ofx(object):
     pass
@@ -7,17 +71,12 @@ class Ofx(object):
 class Account(object):
     def __init__(self):
         self.statement = None
-
-class BankAccount(Account):
-    def __init__(self):
-        Account.__init__(self)
         self.number = ''
         self.routing_number = ''
-    
+
 class InvestmentAccount(Account):
     def __init__(self):
-        Account.__init__(self)
-        self.number = ''
+        super(InvestmentAccount, self).__init__(self)
         self.brokerid = ''
 
 class Security:
@@ -66,8 +125,14 @@ class OfxParser(object):
     def parse(cls_, file_handle):
         if isinstance(file_handle, type('')):
             raise RuntimeError("parse() takes in a file handle, not a string")
+
         ofx_obj = Ofx()
-        ofx = BeautifulStoneSoup(file_handle)
+
+        # Store the headers
+        ofx_file = OfxFile(file_handle)
+        ofx_obj.headers = ofx_file.headers
+
+        ofx = BeautifulStoneSoup(ofx_file.fh)
         stmtrs_ofx = ofx.find('stmtrs')
         if stmtrs_ofx:
             ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx)
@@ -76,7 +141,7 @@ class OfxParser(object):
         if ccstmtrs_ofx:
             ofx_obj.account = cls_.parseStmtrs(ccstmtrs_ofx)
             return ofx_obj
-        invstmtrs_ofx = ofx.find('invstmtmsgsrsv1')
+        invstmtrs_ofx = ofx.find('invstmtrs')
         if invstmtrs_ofx:
             ofx_obj.account = cls_.parseInvstmtrs(invstmtrs_ofx)
             return ofx_obj
@@ -84,13 +149,20 @@ class OfxParser(object):
     
     @classmethod
     def parseOfxDateTime(cls_, ofxDateTime):
-        #dateAsString looks like 20101106160000.00[-5:EST]
+        #dateAsString looks something like 20101106160000.00[-5:EST]
         #for 6 Nov 2010 4pm UTC-5 aka EST
-        if (len(ofxDateTime) > 18):
-            timeZoneOffset = datetime.timedelta(hours=int(ofxDateTime[19:].split(':')[0]))
+        res = re.search("\[(?P<tz>-?\d+)\:\w*\]$", ofxDateTime)
+        if res:
+            tz = int(res.group('tz'))
         else:
-            timeZoneOffset = datetime.timedelta(0)
-        return datetime.datetime.strptime(ofxDateTime[:18], '%Y%m%d%H%M%S.%f') - timeZoneOffset
+            tz = 0
+
+        timeZoneOffset = datetime.timedelta(hours=tz)
+
+        try:
+            return datetime.datetime.strptime(ofxDateTime[:14], '%Y%m%d%H%M%S') - timeZoneOffset
+        except:
+            return datetime.datetime.strptime(ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
 
     @classmethod
     def parseInvstmtrs(cls_, invstmtrs_ofx):
