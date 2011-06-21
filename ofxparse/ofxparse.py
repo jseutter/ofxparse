@@ -68,11 +68,16 @@ class OfxFile(object):
 class Ofx(object):
     pass
 
+class AccountType:
+    (Unknown, Bank, CreditCard, Investment) = range(0, 4)
+
 class Account(object):
     def __init__(self):
         self.statement = None
         self.number = ''
         self.routing_number = ''
+        self.institution = None
+        self.type = AccountType.Unknown
 
 class InvestmentAccount(Account):
     def __init__(self):
@@ -118,7 +123,8 @@ class Position(object):
         self.unit_price = 0
 
 class Institution(object):
-    pass
+    def __init__(self):
+        self.organization = ''
 
 class OfxParser(object):
     @classmethod
@@ -135,11 +141,17 @@ class OfxParser(object):
         ofx = BeautifulStoneSoup(ofx_file.fh)
         stmtrs_ofx = ofx.find('stmtrs')
         if stmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx)
+            ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
+            org_ofx = ofx.find('org')
+            if org_ofx:
+                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
             return ofx_obj
         ccstmtrs_ofx = ofx.find('ccstmtrs')
         if ccstmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(ccstmtrs_ofx)
+            ofx_obj.account = cls_.parseStmtrs(ccstmtrs_ofx, AccountType.CreditCard)
+            org_ofx = ofx.find('org')
+            if org_ofx:
+                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
             return ofx_obj
         invstmtrs_ofx = ofx.find('invstmtrs')
         if invstmtrs_ofx:
@@ -173,6 +185,7 @@ class OfxParser(object):
         brokerid_tag = invstmtrs_ofx.find('brokerid')
         if (hasattr(brokerid_tag, 'contents')):
             account.brokerid = brokerid_tag.contents[0].strip()
+        account.type = AccountType.Investment
         
         if (invstmtrs_ofx):
             account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
@@ -223,17 +236,25 @@ class OfxParser(object):
         for transaction_ofx in invstmtrs_ofx.findAll("buymf"):
             statement.transactions.append(cls_.parseInvestmentTransaction(transaction_ofx))
         return statement
+    
+    @classmethod
+    def parseOrg(cls_, org_ofx):
+        institution = Institution()
+        if hasattr(org_ofx, 'contents'):
+            institution.organization = org_ofx.contents[0].strip()
+        return institution
 
     @classmethod
-    def parseStmtrs(cls_, stmtrs_ofx):
+    def parseStmtrs(cls_, stmtrs_ofx, accountType):
         ''' Parse the <STMTRS> tag and return an Account object. '''
-        account = BankAccount()
+        account = Account()
         acctid_tag = stmtrs_ofx.find('acctid')
         if hasattr(acctid_tag, 'contents'):
             account.number = acctid_tag.contents[0].strip()
         bankid_tag = stmtrs_ofx.find('bankid')
         if hasattr(bankid_tag, 'contents'):
             account.routing_number = bankid_tag.contents[0].strip()
+        account.type = accountType
 
         if stmtrs_ofx:
             account.statement = cls_.parseStatement(stmtrs_ofx)
