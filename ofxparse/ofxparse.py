@@ -76,7 +76,7 @@ class Account(object):
     
 class InvestmentAccount(Account):
     def __init__(self):
-        super(InvestmentAccount, self).__init__(self)
+        super(InvestmentAccount, self).__init__()
         self.brokerid = ''
 
 class Statement(object):
