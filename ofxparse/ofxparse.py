@@ -105,22 +105,22 @@ class Transaction(object):
     def __init__(self):
         self.name = ''
         self.type = ''
-        self.date = ''
-        self.amount = ''
+        self.date = None
+        self.amount = None
         self.id = ''
         self.memo = ''
 
 class InvestmentTransaction(object):
     def __init__(self):
         self.security = ''
-        self.units = 0
-        self.unit_price = 0
+        self.units = decimal.Decimal(0)
+        self.unit_price = decimal.Decimal(0)
 
 class Position(object):
     def __init__(self):
         self.security = ''
-        self.units = 0
-        self.unit_price = 0
+        self.units = decimal.Decimal(0)
+        self.unit_price = decimal.Decimal(0)
 
 class Institution(object):
     def __init__(self):
@@ -276,12 +276,12 @@ class OfxParser(object):
         if hasattr(ledger_bal_tag, "contents"):
             balamt_tag = ledger_bal_tag.find('balamt')
             if hasattr(balamt_tag, "contents"):
-                statement.balance = balamt_tag.contents[0].strip()
+                statement.balance = decimal.Decimal(balamt_tag.contents[0].strip())
         avail_bal_tag = stmt_ofx.find('availbal')
         if hasattr(avail_bal_tag, "contents"):
             balamt_tag = avail_bal_tag.find('balamt')
             if hasattr(balamt_tag, "contents"):
-                statement.available_balance = balamt_tag.contents[0].strip()
+                statement.available_balance = decimal.Decimal(balamt_tag.contents[0].strip())
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             statement.transactions.append(cls_.parseTransaction(transaction_ofx))
         return statement
@@ -307,7 +307,7 @@ class OfxParser(object):
 
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
-            transaction.amount = amt_tag.contents[0].strip()
+            transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
