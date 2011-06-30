@@ -181,3 +181,25 @@ class TestTransaction(TestCase):
         self.assertEquals('', t.name)
         self.assertEquals('', t.memo)
 
+class TestInvestmentAccount(TestCase):
+    sample = '''
+<?xml version="1.0" encoding="UTF-8" ?>
+<?OFX OFXHEADER="200" VERSION="200" SECURITY="NONE"
+  OLDFILEUID="NONE" NEWFILEUID="NONE" ?>
+<OFX>
+ <INVSTMTMSGSRSV1>
+  <INVSTMTTRNRS>
+   <TRNUID>38737714201101012011062420110624</TRNUID>
+   <STATUS>
+    <CODE>0</CODE>
+    <SEVERITY>INFO</SEVERITY>
+   </STATUS>
+   <INVSTMTRS>
+   </INVSTMTRS>
+  </INVSTMTTRNRS>
+ </INVSTMTMSGSRSV1>
+</OFX>
+'''
+    def testThatParseCanCreateAnInvestmentAccount(self):
+        ofx = OfxParser.parse(StringIO(self.sample))
+        #Success!
