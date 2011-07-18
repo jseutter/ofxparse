@@ -68,7 +68,7 @@ class OfxFile(object):
 class Ofx(object):
     pass
 
-class AccountType:
+class AccountType(object):
     (Unknown, Bank, CreditCard, Investment) = range(0, 4)
 
 class Account(object):
@@ -103,7 +103,7 @@ class InvestmentStatement(object):
 
 class Transaction(object):
     def __init__(self):
-        self.name = ''
+        self.payee = ''
         self.type = ''
         self.date = None
         self.amount = None
