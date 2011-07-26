@@ -85,15 +85,17 @@ class InvestmentAccount(Account):
         self.brokerid = ''
 
 class Security:
-    def __init__(self, uniqueid, name, ticker):
+    def __init__(self, uniqueid, name, ticker, memo):
         self.uniqueid = uniqueid
         self.name = name
         self.ticker = ticker
+        self.memo = memo
 
 class Statement(object):
     def __init__(self):
         self.start_date = ''
         self.end_date = ''
+        self.currency = ''
         self.transactions = []
 
 class InvestmentStatement(object):
@@ -156,6 +158,11 @@ class OfxParser(object):
         invstmtrs_ofx = ofx.find('invstmtrs')
         if invstmtrs_ofx:
             ofx_obj.account = cls_.parseInvstmtrs(invstmtrs_ofx)
+            seclist_ofx = ofx.find('seclist')
+            if seclist_ofx:
+                ofx_obj.security_list = cls_.parseSeclist(seclist_ofx)
+            else:
+                ofx_obj.security_list = None
             return ofx_obj
         return ofx_obj
     
@@ -190,6 +197,18 @@ class OfxParser(object):
         if (invstmtrs_ofx):
             account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
         return account
+    
+    @classmethod
+    def parseSeclist(cls_, seclist_ofx):
+        securityList = []
+        for secinfo_ofx in seclist_ofx.findAll('secinfo'):
+            uniqueid_tag = secinfo_ofx.find('uniqueid')
+            name_tag = secinfo_ofx.find('secname')
+            ticker_tag = secinfo_ofx.find('ticker')
+            memo_tag = secinfo_ofx.find('memo')
+            if uniqueid_tag and name_tag and ticker_tag and memo_tag:
+                securityList.append(Security(uniqueid_tag.contents[0].strip(), name_tag.contents[0].strip(), ticker_tag.contents[0].strip(), memo_tag.contents[0].strip()))
+        return securityList
 
     @classmethod
     def parseInvestmentPosition(cls_, ofx):
@@ -235,6 +254,8 @@ class OfxParser(object):
             statement.positions.append(cls_.parseInvestmentPosition(position_ofx))
         for transaction_ofx in invstmtrs_ofx.findAll("buymf"):
             statement.transactions.append(cls_.parseInvestmentTransaction(transaction_ofx))
+        for transaction_ofx in invstmtrs_ofx.findAll("sellmf"):
+            statement.transactions.append(cls_.parseInvestmentTransaction(transaction_ofx))
         return statement
     
     @classmethod
@@ -272,6 +293,9 @@ class OfxParser(object):
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
             statement.end_date = cls_.parseOfxDateTime(dtend_tag.contents[0].strip())
+        currency_tag = stmt_ofx.find('curdef')
+        if hasattr(currency_tag, "contents"):
+            statement.currency = currency_tag.contents[0].strip().lower()
         ledger_bal_tag = stmt_ofx.find('ledgerbal')
         if hasattr(ledger_bal_tag, "contents"):
             balamt_tag = ledger_bal_tag.find('balamt')
