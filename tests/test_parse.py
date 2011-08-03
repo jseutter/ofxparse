@@ -175,8 +175,8 @@ class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
         t = Transaction()
         self.assertEquals('', t.type)
-        self.assertEquals('', t.date)
-        self.assertEquals('', t.amount)
+        self.assertEquals(None, t.date)
+        self.assertEquals(None, t.amount)
         self.assertEquals('', t.id)
         self.assertEquals('', t.name)
         self.assertEquals('', t.memo)
