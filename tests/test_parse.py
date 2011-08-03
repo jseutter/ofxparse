@@ -166,7 +166,7 @@ class TestParseTransaction(TestCase):
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('pos', transaction.type)
         self.assertEquals(datetime(2009, 4, 1, 12, 20, 17) - timedelta(hours=-5), transaction.date)
-        self.assertEquals('-6.60', transaction.amount)
+        self.assertEquals(Decimal('-6.60'), transaction.amount)
         self.assertEquals('0000123456782009040100001', transaction.id)
         self.assertEquals("MCDONALD'S #112", transaction.payee)
         self.assertEquals("POS MERCHANDISE;MCDONALD'S #112", transaction.memo)
