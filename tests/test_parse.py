@@ -1,13 +1,14 @@
-from unittest import TestCase
 from BeautifulSoup import BeautifulStoneSoup
+from datetime import datetime, timedelta
+from decimal import Decimal
+from unittest import TestCase
+from StringIO import StringIO
 import sys
 sys.path.append('..')
 
 from support import open_file
 from ofxparse import *
 from ofxparse.ofxparse import OfxFile
-from StringIO import StringIO
-from datetime import datetime, timedelta
 
 
 class TestOfxFile(TestCase):
