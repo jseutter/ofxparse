@@ -91,10 +91,10 @@ class TestParse(TestCase):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertEquals('12300 000012345678', ofx.account.number)
         self.assertEquals('160000100', ofx.account.routing_number)
-        self.assertEquals('382.34', ofx.account.statement.balance)
+        self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', ofx.bank_account.statement.balance_in_pennies)
-        self.assertEquals('682.34', ofx.account.statement.available_balance)
+        self.assertEquals(Decimal('682.34'), ofx.account.statement.available_balance)
         self.assertEquals(datetime(2009, 4, 1), ofx.account.statement.start_date)
         self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), ofx.account.statement.end_date)
         
@@ -147,8 +147,8 @@ class TestParseStatement(TestCase):
         self.assertEquals(datetime(2009, 4, 1), statement.start_date)
         self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), statement.end_date)
         self.assertEquals(1, len(statement.transactions))
-        self.assertEquals('382.34', statement.balance)
-        self.assertEquals('682.34', statement.available_balance)
+        self.assertEquals(Decimal('382.34'), statement.balance)
+        self.assertEquals(Decimal('682.34'), statement.available_balance)
 
 class TestStatement(TestCase):
     def testThatANewStatementIsValid(self):
