@@ -104,7 +104,7 @@ class TestParse(TestCase):
         transaction = ofx.account.statement.transactions[0]
         self.assertEquals("MCDONALD'S #112", transaction.payee)
         self.assertEquals('pos', transaction.type)
-        self.assertEquals('-6.60', transaction.amount)
+        self.assertEquals(Decimal('-6.60'), transaction.amount)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', transaction.amount_in_pennies)
 
