@@ -174,11 +174,11 @@ class TestParseTransaction(TestCase):
 class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
         t = Transaction()
+        self.assertEquals('', t.payee)
         self.assertEquals('', t.type)
         self.assertEquals(None, t.date)
         self.assertEquals(None, t.amount)
         self.assertEquals('', t.id)
-        self.assertEquals('', t.name)
         self.assertEquals('', t.memo)
 
 class TestInvestmentAccount(TestCase):
