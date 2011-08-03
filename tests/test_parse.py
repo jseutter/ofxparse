@@ -7,7 +7,7 @@ import sys
 sys.path.append('..')
 
 from support import open_file
-from ofxparse import *
+from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxFile
 
 
@@ -75,7 +75,7 @@ NEWFILEUID:NONE
 
 class TestParse(TestCase):
     def testThatParseWorksWithoutErrors(self):
-        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
+        OfxParser.parse(open_file('bank_medium.ofx'))
 
     def testThatParseFailsIfNothingToParse(self):
         self.assertRaises(TypeError, OfxParser.parse, None)
@@ -202,5 +202,5 @@ class TestInvestmentAccount(TestCase):
 </OFX>
 '''
     def testThatParseCanCreateAnInvestmentAccount(self):
-        ofx = OfxParser.parse(StringIO(self.sample))
+        OfxParser.parse(StringIO(self.sample))
         #Success!
