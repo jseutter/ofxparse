@@ -118,13 +118,13 @@ class TestParseStmtrs(TestCase):
     
     def testThatParseStmtrsReturnsAnAccount(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'))
+        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
     
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'))
+        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)
         self.assertTrue(hasattr(account, 'statement'))
         
 class TestAccount(TestCase):
