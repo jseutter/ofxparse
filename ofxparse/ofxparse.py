@@ -112,12 +112,20 @@ class Transaction(object):
         self.amount = None
         self.id = ''
         self.memo = ''
+    
+    def __repr__(self):
+        return "<Transaction units=" + str(self.amount) + ">"
 
 class InvestmentTransaction(object):
     def __init__(self):
+        self.tradeDate = None
+        self.settleDate = None
         self.security = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
+    
+    def __repr__(self):
+        return "<InvestmentTransaction units=" + str(self.units) + ">"
 
 class Position(object):
     def __init__(self):
@@ -238,6 +246,18 @@ class OfxParser(object):
     @classmethod
     def parseInvestmentTransaction(cls_, ofx):
         transaction = InvestmentTransaction()
+        tag = ofx.find('fitid')
+        if (hasattr(tag, 'contents')):
+            transaction.id = tag.contents[0].strip()
+        tag = ofx.find('memo')
+        if (hasattr(tag, 'contents')):
+            transaction.memo = tag.contents[0].strip()
+        tag = ofx.find('dttrade')
+        if (hasattr(tag, 'contents')):
+            transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+        tag = ofx.find('dtsettle')
+        if (hasattr(tag, 'contents')):
+            transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
         tag = ofx.find('uniqueid')
         if (hasattr(tag, 'contents')):
             transaction.security = tag.contents[0].strip()
@@ -252,13 +272,18 @@ class OfxParser(object):
     @classmethod
     def parseInvestmentStatement(cls_, invstmtrs_ofx):
         statement = InvestmentStatement()
-        tag = invstmtrs_ofx.find('dtstart')
-        if (hasattr(tag, 'contents')):
-            statement.start_date = cls_.parseOfxDateTime(
-                tag.contents[0].strip())
-        tag = invstmtrs_ofx.find('dtend')
-        if (hasattr(tag, 'contents')):
-            statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
+        currency_tag = invstmtrs_ofx.find('curdef')
+        if hasattr(currency_tag, "contents"):
+            statement.currency = currency_tag.contents[0].strip().lower()
+        invtranlist_ofx = invstmtrs_ofx.find('invtranlist')
+        if (invtranlist_ofx != None):
+            tag = invtranlist_ofx.find('dtstart')
+            if (hasattr(tag, 'contents')):
+                statement.start_date = cls_.parseOfxDateTime(
+                    tag.contents[0].strip())
+            tag = invtranlist_ofx.find('dtend')
+            if (hasattr(tag, 'contents')):
+                statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
         for position_ofx in invstmtrs_ofx.findAll("posmf"):
             statement.positions.append(
                 cls_.parseInvestmentPosition(position_ofx))
@@ -266,6 +291,9 @@ class OfxParser(object):
             statement.transactions.append(
                 cls_.parseInvestmentTransaction(transaction_ofx))
         for transaction_ofx in invstmtrs_ofx.findAll("sellmf"):
+            statement.transactions.append(
+                cls_.parseInvestmentTransaction(transaction_ofx))
+        for transaction_ofx in invstmtrs_ofx.findAll("reinvest"):
             statement.transactions.append(
                 cls_.parseInvestmentTransaction(transaction_ofx))
         return statement

@@ -204,3 +204,17 @@ class TestInvestmentAccount(TestCase):
     def testThatParseCanCreateAnInvestmentAccount(self):
         OfxParser.parse(StringIO(self.sample))
         #Success!
+
+class TestVanguardInvestmentStatement(TestCase):
+    def testForUnclosedTags(self):
+        ofx = OfxParser.parse(open_file('vanguard.ofx'))
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEquals(len(ofx.account.statement.transactions), 1)
+        self.assertEquals(ofx.account.statement.transactions[0].id, '01234567890.0123.07152011.0')
+        self.assertEquals(ofx.account.statement.transactions[0].tradeDate, datetime(2011, 7, 15, 21))
+        self.assertEquals(ofx.account.statement.transactions[0].settleDate, datetime(2011, 7, 15, 21))
+        self.assertTrue(hasattr(ofx.account.statement, 'positions'))
+        self.assertEquals(len(ofx.account.statement.positions), 2)
+        self.assertEquals(ofx.account.statement.positions[0].units, Decimal('102.0'))
