@@ -92,6 +92,7 @@ class TestParse(TestCase):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertEquals('12300 000012345678', ofx.account.number)
         self.assertEquals('160000100', ofx.account.routing_number)
+        self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', ofx.bank_account.statement.balance_in_pennies)
@@ -121,6 +122,8 @@ class TestParseStmtrs(TestCase):
         account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
+        self.assertEquals('CHECKING', account.account_type)
+
     
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = BeautifulStoneSoup(self.input)
@@ -132,6 +135,7 @@ class TestAccount(TestCase):
         account = Account()
         self.assertEquals('', account.number)
         self.assertEquals('', account.routing_number)
+        self.assertEquals('', account.account_type)
         self.assertEquals(None, account.statement)
         
 class TestParseStatement(TestCase):
