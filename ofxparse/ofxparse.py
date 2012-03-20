@@ -108,6 +108,9 @@ class InvestmentStatement(object):
     def __init__(self):
         self.positions = []
         self.transactions = []
+        # Error tracking:
+        self.discarded_entries = []
+        self.warnings = []
 
 class Transaction(object):
     def __init__(self):
@@ -226,13 +229,13 @@ class OfxParser(object):
             if cls_.fail_fast or len(acctid_tag.contents) > 0:
                 account.number = acctid_tag.contents[0].strip()
             else:
-                account.warnings.append("Empty acctid tag for %s" % stmt_ofx)
+                account.warnings.append("Empty acctid tag for %s" % invstmtrs_ofx)
         brokerid_tag = invstmtrs_ofx.find('brokerid')
         if (hasattr(brokerid_tag, 'contents')):
-            if cls_.fail_fast or len(brokerid.contents) > 0:
+            if cls_.fail_fast or len(brokerid_tag.contents) > 0:
                 account.brokerid = brokerid_tag.contents[0].strip()
             else:
-                account.warnings.append("Empty brokerid tag for %s" % stmt_ofx)
+                account.warnings.append("Empty brokerid tag for %s" % invstmtrs_ofx)
         account.type = AccountType.Investment
         
         if (invstmtrs_ofx):
@@ -330,7 +333,7 @@ class OfxParser(object):
             if cls_.fail_fast:
                 raise
             statement.discarded_entries.append(
-                { 'error': transaction_type + ": " + str(e),
+                { 'error': "Positions: " + str(e),
                  'content': investment_ofx }
             )
         
