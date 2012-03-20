@@ -8,7 +8,7 @@ sys.path.append('..')
 
 from support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile
+from ofxparse.ofxparse import OfxFile, OfxParserException
 
 
 class TestOfxFile(TestCase):
@@ -258,9 +258,29 @@ class TestGracefulFailures(TestCase):
     caller as warnings and discarded entries in the Statement class.
     '''
     def testDateFieldMissing(self):
-        ''' The test file contains two transactions in a single
-        statement. Test that one of them fails due to date field'''
+        ''' The test file contains three transactions in a single
+        statement. 
+        
+        They fail due to:
+        1) No date
+        2) Empty date
+        3) Invalid date
+        '''
         ofx = OfxParser.parse(open_file('fail_nice/date_missing.ofx'), False)
-        self.assertEquals(len(ofx.account.statement.transactions), 1)
-        self.assertEquals(len(ofx.account.statement.discarded_entries), 1)
+        self.assertEquals(len(ofx.account.statement.transactions), 0)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 3)
         self.assertEquals(len(ofx.account.statement.warnings), 0)
+        
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse, open_file('fail_nice/date_missing.ofx'))
+
+    def testDecimalConversionError(self):
+        ''' The test file contains a transaction that has a poorly formatted
+        decimal number ($20). Test that we catch this.
+        '''
+        ofx = OfxParser.parse(open_file('fail_nice/decimal_error.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 0)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 1)
+        
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse, open_file('fail_nice/decimal_error.ofx'))

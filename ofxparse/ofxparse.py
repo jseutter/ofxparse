@@ -79,6 +79,8 @@ class Account(object):
         self.routing_number = ''
         self.institution = None
         self.type = AccountType.Unknown
+        # Used for error tracking
+        self.warnings = []
 
 class InvestmentAccount(Account):
     def __init__(self):
@@ -152,7 +154,9 @@ class OfxParser(object):
         
         If fail_fast is True, the parser will fail on any errors.
         If fail_fast is False, the parser will log poor statements in the
-        statement class and continue to run.
+        statement class and continue to run. Note: the library does not
+        guarantee that no exceptions will be raised to the caller, only
+        that statements will include bad transactions (which are marked).
         
         '''
         cls_.fail_fast = fail_fast
@@ -219,14 +223,21 @@ class OfxParser(object):
         account = InvestmentAccount()
         acctid_tag = invstmtrs_ofx.find('acctid')
         if (hasattr(acctid_tag, 'contents')):
-            account.number = acctid_tag.contents[0].strip()
+            if cls_.fail_fast or len(acctid_tag.contents) > 0:
+                account.number = acctid_tag.contents[0].strip()
+            else:
+                account.warnings.append("Empty acctid tag for %s" % stmt_ofx)
         brokerid_tag = invstmtrs_ofx.find('brokerid')
         if (hasattr(brokerid_tag, 'contents')):
-            account.brokerid = brokerid_tag.contents[0].strip()
+            if cls_.fail_fast or len(brokerid.contents) > 0:
+                account.brokerid = brokerid_tag.contents[0].strip()
+            else:
+                account.warnings.append("Empty brokerid tag for %s" % stmt_ofx)
         account.type = AccountType.Investment
         
         if (invstmtrs_ofx):
             account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
+        
         return account
     
     @classmethod
@@ -298,23 +309,45 @@ class OfxParser(object):
         if (invtranlist_ofx != None):
             tag = invtranlist_ofx.find('dtstart')
             if (hasattr(tag, 'contents')):
-                statement.start_date = cls_.parseOfxDateTime(
-                    tag.contents[0].strip())
+                if cls_.fail_fast or len(tag.contents) > 0:
+                    statement.start_date = cls_.parseOfxDateTime(
+                        tag.contents[0].strip())
+                else:
+                    statement.warnings.append('Empty start date.')
+                    
             tag = invtranlist_ofx.find('dtend')
             if (hasattr(tag, 'contents')):
-                statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
-        for position_ofx in invstmtrs_ofx.findAll("posmf"):
-            statement.positions.append(
-                cls_.parseInvestmentPosition(position_ofx))
-        for transaction_ofx in invstmtrs_ofx.findAll("buymf"):
-            statement.transactions.append(
-                cls_.parseInvestmentTransaction(transaction_ofx))
-        for transaction_ofx in invstmtrs_ofx.findAll("sellmf"):
-            statement.transactions.append(
-                cls_.parseInvestmentTransaction(transaction_ofx))
-        for transaction_ofx in invstmtrs_ofx.findAll("reinvest"):
-            statement.transactions.append(
-                cls_.parseInvestmentTransaction(transaction_ofx))
+                if cls_.fail_fast or len(tag.contents) > 0:
+                    statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
+                else:
+                    statement.warnings.append('Empty end date.')
+        
+        try:
+            for investment_ofx in invstmtrs_ofx.findAll('posmf'):
+                statement.positions.append(
+                    cls_.parseInvestmentPosition(investment_ofx))
+        except Exception as e:
+            if cls_.fail_fast:
+                raise
+            statement.discarded_entries.append(
+                { 'error': transaction_type + ": " + str(e),
+                 'content': investment_ofx }
+            )
+        
+        
+        for transaction_type in ['buymf', 'sellmf', 'reinvest']:
+            try:
+                for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
+                    statement.transactions.append(
+                        cls_.parseInvestmentTransaction(investment_ofx))
+            except Exception as e:
+                if cls_.fail_fast:
+                    raise
+                statement.discarded_entries.append(
+                    { 'error': transaction_type + ": " + str(e),
+                     'content': investment_ofx }
+                )
+        
         return statement
     
     @classmethod
@@ -387,7 +420,7 @@ class OfxParser(object):
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
                 else:
-                    statement.warnings.append("Available balance amount was empty  for %s" % stmt_ofx)
+                    statement.warnings.append("Available balance amount was empty for %s" % stmt_ofx)
                     
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
@@ -420,7 +453,14 @@ class OfxParser(object):
 
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
-            transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
+            try:
+                transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
+            except IndexError:
+                raise
+            except Exception:
+                raise OfxParserException("Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
+        else:
+            raise OfxParserException("Missing Transaction Amount (a required field)")
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
@@ -428,11 +468,17 @@ class OfxParser(object):
                 transaction.date = cls_.parseOfxDateTime(
                     date_tag.contents[0].strip())
             except IndexError: 
-                raise OfxParserException("Missing Transaction Date")
-                
+                raise OfxParserException("Invalid Transaction Date")
+            except ValueError as ve:
+                raise OfxParserException(str(ve))
+        else:
+            raise OfxParserException("Missing Transaction Date (a required field)")
+        
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
             transaction.id = id_tag.contents[0].strip()
-
+        else:
+            raise OfxParserException("Missing FIT id (a required field)")
+        
         return transaction
 

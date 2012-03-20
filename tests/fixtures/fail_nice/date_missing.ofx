@@ -32,10 +32,9 @@
 
 				<STMTTRN>
                     <TRNTYPE>OTHER</TRNTYPE>
-                    <DTPOSTED>20110527</DTPOSTED>
                     <TRNAMT>-80.00</TRNAMT>
                     <FITID>184997056</FITID>
-                    <NAME>TestPass</NAME>
+                    <NAME>TestFail1</NAME>
                 </STMTTRN>
 
                 <STMTTRN>
@@ -43,7 +42,15 @@
                     <DTPOSTED></DTPOSTED>
                     <TRNAMT>200.00</TRNAMT>
                     <FITID>2000957249</FITID>
-                    <NAME>TestFail</NAME>
+                    <NAME>TestFail2</NAME>
+                </STMTTRN>
+                
+                <STMTTRN>
+                    <TRNTYPE>OTHER</TRNTYPE>
+                    <DTPOSTED>20120231</DTPOSTED>
+                    <TRNAMT>200.00</TRNAMT>
+                    <FITID>2000957249</FITID>
+                    <NAME>TestFail2</NAME>
                 </STMTTRN>
 
             </BANKTRANLIST>
