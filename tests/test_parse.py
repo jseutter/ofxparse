@@ -107,6 +107,40 @@ class TestParse(TestCase):
         self.assertEquals(Decimal('-6.60'), transaction.amount)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', transaction.amount_in_pennies)
+        
+class TestStringToDate(TestCase):
+    ''' Test the string to date parser '''
+    def test_bad_format(self):
+        ''' A poorly formatted string should throw a ValueError '''
+        
+        bad_string = 'abcdLOL!'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+        
+        bad_but_close_string = '881103'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+
+        no_month_string = '19881301'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+
+    def test_parses_correct_time(self):
+        ''' Test whether it can parse correct time for some valid time fields '''
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201'), 
+            datetime(1988, 12, 1, 0, 0) )
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201230100'), 
+            datetime(1988, 12, 1, 23, 01) )
+        self.assertEquals( OfxParser.parseOfxDateTime('20120229230100'), 
+            datetime(2012, 2, 29, 23, 01) )
+        
+    def test_parses_time_offset(self):
+        ''' Test that we handle GMT offset '''
+        self.assertEquals( OfxParser.parseOfxDateTime('20001201120000 [0:GMT]'), 
+            datetime(2000, 12, 1, 12, 0) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('19991201120000 [1:ITT]'), 
+            datetime(1999, 12, 1, 11, 0) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201230100 [-5:EST]'), 
+            datetime(1988, 12, 2, 4, 1) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('20120229230100 [-6:CAT]'), 
+            datetime(2012, 3, 1, 5, 1) ) 
 
 class TestParseStmtrs(TestCase):
     input = '''
@@ -218,3 +252,15 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertTrue(hasattr(ofx.account.statement, 'positions'))
         self.assertEquals(len(ofx.account.statement.positions), 2)
         self.assertEquals(ofx.account.statement.positions[0].units, Decimal('102.0'))
+
+class TestGracefulFailures(TestCase):
+    ''' Test that when fail_fast is False, failures are returned to the
+    caller as warnings and discarded entries in the Statement class.
+    '''
+    def testDateFieldMissing(self):
+        ''' The test file contains two transactions in a single
+        statement. Test that one of them fails due to date field'''
+        ofx = OfxParser.parse(open_file('fail_nice/date_missing.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 1)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 1)
+        self.assertEquals(len(ofx.account.statement.warnings), 0)
