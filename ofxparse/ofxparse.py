@@ -341,7 +341,7 @@ class OfxParser(object):
             )
         
         
-        for transaction_type in ['buymf', 'sellmf', 'reinvest']:
+        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
