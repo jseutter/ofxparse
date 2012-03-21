@@ -229,16 +229,22 @@ class OfxParser(object):
         account = InvestmentAccount()
         acctid_tag = invstmtrs_ofx.find('acctid')
         if (hasattr(acctid_tag, 'contents')):
-            if cls_.fail_fast or len(acctid_tag.contents) > 0:
+            try:
                 account.number = acctid_tag.contents[0].strip()
-            else:
+            except IndexError:
                 account.warnings.append("Empty acctid tag for %s" % invstmtrs_ofx)
+                if cls_.fail_fast:
+                    raise
+                    
         brokerid_tag = invstmtrs_ofx.find('brokerid')
         if (hasattr(brokerid_tag, 'contents')):
-            if cls_.fail_fast or len(brokerid_tag.contents) > 0:
+            try:
                 account.brokerid = brokerid_tag.contents[0].strip()
-            else:
+            except IndexError:
                 account.warnings.append("Empty brokerid tag for %s" % invstmtrs_ofx)
+                if cls_.fail_fast:
+                    raise
+                    
         account.type = AccountType.Investment
         
         if (invstmtrs_ofx):
@@ -387,46 +393,56 @@ class OfxParser(object):
         statement = Statement()
         dtstart_tag = stmt_ofx.find('dtstart')
         if hasattr(dtstart_tag, "contents"):
-            if cls_.fail_fast or len(dtstart_tag.contents) > 0:
+            try:
                 statement.start_date = cls_.parseOfxDateTime(
                     dtstart_tag.contents[0].strip())
-            else:
+            except IndexError:
                 statement.warnings.append("Statement start date was empty for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise                
                 
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
-            if cls_.fail_fast or len(dtend_tag.contents) > 0:
+            try:
                 statement.end_date = cls_.parseOfxDateTime(
                     dtend_tag.contents[0].strip())
-            else:
-                statement.warnings.append("Statement end date was empty for %s" % stmt_ofx)
+            except IndexError:
+                statement.warnings.append("Statement start date was empty for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise
                 
         currency_tag = stmt_ofx.find('curdef')
         if hasattr(currency_tag, "contents"):
-            if cls_.fail_fast or len(currency_tag.contents) > 0:
+            try:
                 statement.currency = currency_tag.contents[0].strip().lower()
-            else:
+            except IndexError:
                 statement.warnings.append("Currency definition was empty for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise
                 
         ledger_bal_tag = stmt_ofx.find('ledgerbal')
         if hasattr(ledger_bal_tag, "contents"):
             balamt_tag = ledger_bal_tag.find('balamt')
             if hasattr(balamt_tag, "contents"):
-                if cls_.fail_fast or len(balamt_tag.contents) > 0:
+                try:
                     statement.balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                else:
+                except IndexError:
                     statement.warnings.append("Ledger balance amount was empty for %s" % stmt_ofx)
+                    if cls_.fail_fast:
+                        raise
                     
         avail_bal_tag = stmt_ofx.find('availbal')
         if hasattr(avail_bal_tag, "contents"):
             balamt_tag = avail_bal_tag.find('balamt')
             if hasattr(balamt_tag, "contents"):
-                if cls_.fail_fast or len(balamt_tag.contents) > 0:
+                try:
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                else:
+                except IndexError:
                     statement.warnings.append("Available balance amount was empty for %s" % stmt_ofx)
+                    if cls_.fail_fast:
+                        raise
                     
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
