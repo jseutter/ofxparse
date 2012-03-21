@@ -174,6 +174,9 @@ class OfxParser(object):
         ofx_obj.headers = ofx_file.headers
 
         ofx = BeautifulStoneSoup(ofx_file.fh)
+        if len(ofx.contents) == 0:
+            raise OfxParserException('The ofx file is empty!')
+            
         stmtrs_ofx = ofx.find('stmtrs')
         if stmtrs_ofx:
             ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)

@@ -74,6 +74,10 @@ NEWFILEUID:NONE
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
 class TestParse(TestCase):
+    def testEmptyFile(self):
+        fh = StringIO("")
+        self.assertRaises(OfxParserException, OfxParser.parse, fh)
+    
     def testThatParseWorksWithoutErrors(self):
         OfxParser.parse(open_file('bank_medium.ofx'))
 
