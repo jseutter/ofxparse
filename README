@@ -36,6 +36,13 @@ I'm looking for different types of accounts to make this library more robust.  I
 credit account or investment account files.  Please (anonymize first) and mail to jseutter dot ofxparse
 at gmail dot com.
 
+Tests
+=====
+
+Run the tests with python::
+
+  python -m unittest tests.test_parse
+
 
 Homepage
 ========
