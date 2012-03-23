@@ -1,0 +1,65 @@
+
+
+<OFX>
+    <SIGNONMSGSRSV1>
+        <SONRS>
+            <STATUS>
+                <CODE>0</CODE>
+                <SEVERITY>INFO</SEVERITY>
+            </STATUS>
+                  <DTSERVER>20110614</DTSERVER>
+                  <LANGUAGE></LANGUAGE>
+        </SONRS>
+    </SIGNONMSGSRSV1>
+    <BANKMSGSRSV1>
+        <STMTTRNRS>
+            <TRNUID>1</TRNUID>
+            <STATUS>
+                <CODE>0</CODE>
+                <SEVERITY>INFO</SEVERITY>
+            </STATUS>
+            <STMTRS>
+            <CURDEF>USD</CURDEF>
+            <BANKACCTFROM>
+                <BANKID>123845030</BANKID>
+                <ACCTID>192639749</ACCTID>
+                <ACCTTYPE>CHECKING</ACCTTYPE>
+            </BANKACCTFROM>
+            
+            <BANKTRANLIST>
+            <DTSTART>20110412</DTSTART>
+            <DTEND>20110614</DTEND> 
+
+				<STMTTRN>
+                    <TRNTYPE>OTHER</TRNTYPE>
+                    <TRNAMT>-80.00</TRNAMT>
+                    <FITID>184997056</FITID>
+                    <NAME>TestFail1</NAME>
+                </STMTTRN>
+
+                <STMTTRN>
+                    <TRNTYPE>OTHER</TRNTYPE>
+                    <DTPOSTED></DTPOSTED>
+                    <TRNAMT>200.00</TRNAMT>
+                    <FITID>2000957249</FITID>
+                    <NAME>TestFail2</NAME>
+                </STMTTRN>
+                
+                <STMTTRN>
+                    <TRNTYPE>OTHER</TRNTYPE>
+                    <DTPOSTED>20120231</DTPOSTED>
+                    <TRNAMT>200.00</TRNAMT>
+                    <FITID>2000957249</FITID>
+                    <NAME>TestFail2</NAME>
+                </STMTTRN>
+
+            </BANKTRANLIST>
+            
+            <LEDGERBAL>
+                <BALAMT>0</BALAMT>
+                <DTASOF>20110614</DTASOF>
+            </LEDGERBAL>
+            </STMTRS>
+        </STMTTRNRS>
+    </BANKMSGSRSV1>
+</OFX> 

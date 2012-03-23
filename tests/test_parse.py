@@ -8,7 +8,7 @@ sys.path.append('..')
 
 from support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile
+from ofxparse.ofxparse import OfxFile, OfxParserException
 
 
 class TestOfxFile(TestCase):
@@ -74,6 +74,10 @@ NEWFILEUID:NONE
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
 class TestParse(TestCase):
+    def testEmptyFile(self):
+        fh = StringIO("")
+        self.assertRaises(OfxParserException, OfxParser.parse, fh)
+    
     def testThatParseWorksWithoutErrors(self):
         OfxParser.parse(open_file('bank_medium.ofx'))
 
@@ -108,6 +112,40 @@ class TestParse(TestCase):
         self.assertEquals(Decimal('-6.60'), transaction.amount)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', transaction.amount_in_pennies)
+        
+class TestStringToDate(TestCase):
+    ''' Test the string to date parser '''
+    def test_bad_format(self):
+        ''' A poorly formatted string should throw a ValueError '''
+        
+        bad_string = 'abcdLOL!'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+        
+        bad_but_close_string = '881103'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+
+        no_month_string = '19881301'
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+
+    def test_parses_correct_time(self):
+        ''' Test whether it can parse correct time for some valid time fields '''
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201'), 
+            datetime(1988, 12, 1, 0, 0) )
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201230100'), 
+            datetime(1988, 12, 1, 23, 01) )
+        self.assertEquals( OfxParser.parseOfxDateTime('20120229230100'), 
+            datetime(2012, 2, 29, 23, 01) )
+        
+    def test_parses_time_offset(self):
+        ''' Test that we handle GMT offset '''
+        self.assertEquals( OfxParser.parseOfxDateTime('20001201120000 [0:GMT]'), 
+            datetime(2000, 12, 1, 12, 0) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('19991201120000 [1:ITT]'), 
+            datetime(1999, 12, 1, 11, 0) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('19881201230100 [-5:EST]'), 
+            datetime(1988, 12, 2, 4, 1) ) 
+        self.assertEquals( OfxParser.parseOfxDateTime('20120229230100 [-6:CAT]'), 
+            datetime(2012, 3, 1, 5, 1) ) 
 
 class TestParseStmtrs(TestCase):
     input = '''
@@ -222,3 +260,35 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertTrue(hasattr(ofx.account.statement, 'positions'))
         self.assertEquals(len(ofx.account.statement.positions), 2)
         self.assertEquals(ofx.account.statement.positions[0].units, Decimal('102.0'))
+
+class TestGracefulFailures(TestCase):
+    ''' Test that when fail_fast is False, failures are returned to the
+    caller as warnings and discarded entries in the Statement class.
+    '''
+    def testDateFieldMissing(self):
+        ''' The test file contains three transactions in a single
+        statement. 
+        
+        They fail due to:
+        1) No date
+        2) Empty date
+        3) Invalid date
+        '''
+        ofx = OfxParser.parse(open_file('fail_nice/date_missing.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 0)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 3)
+        self.assertEquals(len(ofx.account.statement.warnings), 0)
+        
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse, open_file('fail_nice/date_missing.ofx'))
+
+    def testDecimalConversionError(self):
+        ''' The test file contains a transaction that has a poorly formatted
+        decimal number ($20). Test that we catch this.
+        '''
+        ofx = OfxParser.parse(open_file('fail_nice/decimal_error.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 0)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 1)
+        
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse, open_file('fail_nice/decimal_error.ofx'))
