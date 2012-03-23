@@ -469,15 +469,25 @@ class OfxParser(object):
 
         type_tag = txn_ofx.find('trntype')
         if hasattr(type_tag, 'contents'):
-            transaction.type = type_tag.contents[0].lower().strip()
+            try:
+                transaction.type = type_tag.contents[0].lower().strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction type")
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
-            transaction.payee = name_tag.contents[0].strip()
-
+            try:
+                transaction.payee = name_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction name")
+                
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
-            transaction.memo = memo_tag.contents[0].strip()
+            try:
+                transaction.memo = memo_tag.contents[0].strip()
+            except IndexError:
+                # Memo can be empty.
+                pass
 
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
@@ -504,7 +514,10 @@ class OfxParser(object):
         
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
-            transaction.id = id_tag.contents[0].strip()
+            try:
+                transaction.id = id_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty FIT id (a required field)")
         else:
             raise OfxParserException(u"Missing FIT id (a required field)")
         
