@@ -6,6 +6,5 @@
    Transaction
    Institute
 
-- If the ofx file is empty, an exception should be generated.
 - Look into using a real sgml parser library like the one on PyPi.
 
