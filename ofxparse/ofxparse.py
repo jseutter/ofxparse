@@ -77,6 +77,7 @@ class Account(object):
         self.statement = None
         self.number = ''
         self.routing_number = ''
+        self.account_type = ''
         self.institution = None
         self.type = AccountType.Unknown
         # Used for error tracking
@@ -381,6 +382,9 @@ class OfxParser(object):
         bankid_tag = stmtrs_ofx.find('bankid')
         if hasattr(bankid_tag, 'contents'):
             account.routing_number = bankid_tag.contents[0].strip()
+        type_tag = stmtrs_ofx.find('accttype')
+        if hasattr(type_tag, 'contents'):
+            account.account_type = type_tag.contents[0].strip()
         account.type = accountType
 
         if stmtrs_ofx:
