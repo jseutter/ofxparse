@@ -494,7 +494,7 @@ class OfxParser(object):
             try:
                 transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
             except IndexError:
-                raise
+                raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
                 raise OfxParserException(u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
         else:
