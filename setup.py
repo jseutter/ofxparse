@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-__version__ = '0.6'
+from ofxparse import __version__
 
 setup(name='ofxparse',
       version=__version__,

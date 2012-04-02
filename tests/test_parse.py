@@ -7,8 +7,7 @@ import sys
 sys.path.append('..')
 
 from support import open_file
-from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile, OfxParserException
+from ofxparse.ofxparse import OfxFile, OfxParserException, OfxParser, AccountType, Account, Statement, Transaction
 
 
 class TestOfxFile(TestCase):
