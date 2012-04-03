@@ -477,6 +477,8 @@ class OfxParser(object):
                 transaction.type = type_tag.contents[0].lower().strip()
             except IndexError:
                 raise OfxParserException(u"Empty transaction type")
+            except TypeError:
+                raise OfxParserException(u"No Transaction type (a required field)")
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
@@ -484,6 +486,8 @@ class OfxParser(object):
                 transaction.payee = name_tag.contents[0].strip()
             except IndexError:
                 raise OfxParserException(u"Empty transaction name")
+            except TypeError:
+                raise OfxParserException(u"No Transaction name (a required field)")
                 
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
@@ -491,6 +495,8 @@ class OfxParser(object):
                 transaction.memo = memo_tag.contents[0].strip()
             except IndexError:
                 # Memo can be empty.
+                pass
+            except TypeError:
                 pass
 
         amt_tag = txn_ofx.find('trnamt')
@@ -501,6 +507,8 @@ class OfxParser(object):
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
                 raise OfxParserException(u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
+            except TypeError:
+                raise OfxParserException(u"No Transaction Amount (a required field)")
         else:
             raise OfxParserException(u"Missing Transaction Amount (a required field)")
 
@@ -513,6 +521,8 @@ class OfxParser(object):
                 raise OfxParserException("Invalid Transaction Date")
             except ValueError as ve:
                 raise OfxParserException(str(ve))
+            except TypeError:
+                raise OfxParserException(u"No Transaction Date (a required field)")
         else:
             raise OfxParserException(u"Missing Transaction Date (a required field)")
         
