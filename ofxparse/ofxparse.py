@@ -522,6 +522,8 @@ class OfxParser(object):
                 transaction.id = id_tag.contents[0].strip()
             except IndexError:
                 raise OfxParserException(u"Empty FIT id (a required field)")
+            except TypeError:
+                raise OfxParserException(u"No FIT id (a required field)")
         else:
             raise OfxParserException(u"Missing FIT id (a required field)")
         
