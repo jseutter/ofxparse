@@ -206,11 +206,12 @@ class OfxParser(object):
     
     @classmethod
     def parseOfxDateTime(cls_, ofxDateTime):
-        #dateAsString looks something like 20101106160000.00[-5:EST]
-        #for 6 Nov 2010 4pm UTC-5 aka EST
-        res = re.search("\[(?P<tz>-?\d+)\:\w*\]$", ofxDateTime)
+        # dateAsString looks something like 20101106160000.00[-5:EST]
+        # for 6 Nov 2010 4pm UTC-5 aka EST
+        # Some places (e.g. Newfoundland) have non-integer offsets.
+        res = re.search("\[(?P<tz>-?\d+\.?\d*)\:\w*\]$", ofxDateTime)
         if res:
-            tz = int(res.group('tz'))
+            tz = float(res.group('tz'))
         else:
             tz = 0
 
