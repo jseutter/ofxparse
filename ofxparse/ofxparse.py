@@ -287,7 +287,7 @@ class OfxParser(object):
         if (hasattr(tag, 'contents')):
             try:
                 position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
-            except TypeError:
+            except ValueError:
                 raise
         return position
 
@@ -304,13 +304,13 @@ class OfxParser(object):
         if (hasattr(tag, 'contents')):
             try:
                 transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
-            except TypeError:
+            except ValueError:
                 raise
         tag = ofx.find('dtsettle')
         if (hasattr(tag, 'contents')):
             try:
                 transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
-            except TypeError:
+            except ValueError:
                 raise
         tag = ofx.find('uniqueid')
         if (hasattr(tag, 'contents')):
@@ -340,6 +340,10 @@ class OfxParser(object):
                     statement.warnings.append(u'Empty start date.')
                     if cls_.fail_fast:
                         raise
+                except ValueError as e:
+                    statement.warnings.append(u'Invalid start date: %s' % e)
+                    if cls_.fail_fast:
+                        raise
                     
             tag = invtranlist_ofx.find('dtend')
             if (hasattr(tag, 'contents')):
@@ -347,6 +351,10 @@ class OfxParser(object):
                     statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
                 except IndexError:
                     statement.warnings.append(u'Empty end date.')
+                except ValueError as e:
+                    statement.warnings.append(u'Invalid end date: %s' % e)
+                    if cls_.fail_fast:
+                        raise
         
         try:
             for investment_ofx in invstmtrs_ofx.findAll('posmf'):
@@ -417,7 +425,7 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise                
-            except TypeError:
+            except ValueError:
                 statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise                
@@ -439,7 +447,7 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
-                
+
         currency_tag = stmt_ofx.find('curdef')
         if hasattr(currency_tag, "contents"):
             try:
