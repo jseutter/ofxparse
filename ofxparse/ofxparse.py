@@ -208,6 +208,7 @@ class OfxParser(object):
     def parseOfxDateTime(cls_, ofxDateTime):
         # dateAsString looks something like 20101106160000.00[-5:EST]
         # for 6 Nov 2010 4pm UTC-5 aka EST
+        
         # Some places (e.g. Newfoundland) have non-integer offsets.
         res = re.search("\[(?P<tz>-?\d+\.?\d*)\:\w*\]$", ofxDateTime)
         if res:
@@ -284,7 +285,10 @@ class OfxParser(object):
             position.unit_price = decimal.Decimal(tag.contents[0].strip())
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
-            position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except TypeError:
+                raise
         return position
 
     @classmethod
@@ -298,10 +302,16 @@ class OfxParser(object):
             transaction.memo = tag.contents[0].strip()
         tag = ofx.find('dttrade')
         if (hasattr(tag, 'contents')):
-            transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except TypeError:
+                raise
         tag = ofx.find('dtsettle')
         if (hasattr(tag, 'contents')):
-            transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except TypeError:
+                raise
         tag = ofx.find('uniqueid')
         if (hasattr(tag, 'contents')):
             transaction.security = tag.contents[0].strip()
@@ -342,7 +352,7 @@ class OfxParser(object):
             for investment_ofx in invstmtrs_ofx.findAll('posmf'):
                 statement.positions.append(
                     cls_.parseInvestmentPosition(investment_ofx))
-        except (ValueError, IndexError, decimal.InvalidOperation) as e:
+        except (ValueError, IndexError, decimal.InvalidOperation, TypeError) as e:
             if cls_.fail_fast:
                 raise
             statement.discarded_entries.append(
@@ -407,6 +417,10 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise                
+            except TypeError:
+                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise                
                 
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
@@ -419,6 +433,10 @@ class OfxParser(object):
                     raise
             except ValueError as ve:
                 statement.warnings.append(u"Statement start date was not formatted correctly for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise
+            except TypeError:
+                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
                 
