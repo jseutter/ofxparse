@@ -1,9 +1,7 @@
 from setuptools import setup, find_packages
 
-from ofxparse import __version__
-
 setup(name='ofxparse',
-      version=__version__,
+      version="0.7",
       description="Tools for working with the OFX (Open Financial Exchange) file format",
       long_description=open("./README", "r").read(),
       # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
