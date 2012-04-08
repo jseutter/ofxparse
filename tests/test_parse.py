@@ -7,8 +7,7 @@ import sys
 sys.path.append('..')
 
 from support import open_file
-from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile, OfxParserException
+from ofxparse.ofxparse import OfxFile, OfxParserException, OfxParser, AccountType, Account, Statement, Transaction
 
 
 class TestOfxFile(TestCase):
@@ -145,7 +144,11 @@ class TestStringToDate(TestCase):
         self.assertEquals( OfxParser.parseOfxDateTime('19881201230100 [-5:EST]'), 
             datetime(1988, 12, 2, 4, 1) ) 
         self.assertEquals( OfxParser.parseOfxDateTime('20120229230100 [-6:CAT]'), 
-            datetime(2012, 3, 1, 5, 1) ) 
+            datetime(2012, 3, 1, 5, 1) )
+        self.assertEquals( OfxParser.parseOfxDateTime('20120412120000 [-5.5:XXX]'),
+            datetime(2012, 04, 12, 17, 30))
+        self.assertEquals( OfxParser.parseOfxDateTime('20120412120000 [-5:XXX]'),
+            datetime(2012, 04, 12, 17))
 
 class TestParseStmtrs(TestCase):
     input = '''

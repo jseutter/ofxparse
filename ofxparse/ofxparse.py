@@ -206,11 +206,13 @@ class OfxParser(object):
     
     @classmethod
     def parseOfxDateTime(cls_, ofxDateTime):
-        #dateAsString looks something like 20101106160000.00[-5:EST]
-        #for 6 Nov 2010 4pm UTC-5 aka EST
-        res = re.search("\[(?P<tz>-?\d+)\:\w*\]$", ofxDateTime)
+        # dateAsString looks something like 20101106160000.00[-5:EST]
+        # for 6 Nov 2010 4pm UTC-5 aka EST
+        
+        # Some places (e.g. Newfoundland) have non-integer offsets.
+        res = re.search("\[(?P<tz>-?\d+\.?\d*)\:\w*\]$", ofxDateTime)
         if res:
-            tz = int(res.group('tz'))
+            tz = float(res.group('tz'))
         else:
             tz = 0
 
@@ -283,7 +285,10 @@ class OfxParser(object):
             position.unit_price = decimal.Decimal(tag.contents[0].strip())
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
-            position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                position.date = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except ValueError:
+                raise
         return position
 
     @classmethod
@@ -297,10 +302,16 @@ class OfxParser(object):
             transaction.memo = tag.contents[0].strip()
         tag = ofx.find('dttrade')
         if (hasattr(tag, 'contents')):
-            transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except ValueError:
+                raise
         tag = ofx.find('dtsettle')
         if (hasattr(tag, 'contents')):
-            transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            try:
+                transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+            except ValueError:
+                raise
         tag = ofx.find('uniqueid')
         if (hasattr(tag, 'contents')):
             transaction.security = tag.contents[0].strip()
@@ -329,6 +340,10 @@ class OfxParser(object):
                     statement.warnings.append(u'Empty start date.')
                     if cls_.fail_fast:
                         raise
+                except ValueError as e:
+                    statement.warnings.append(u'Invalid start date: %s' % e)
+                    if cls_.fail_fast:
+                        raise
                     
             tag = invtranlist_ofx.find('dtend')
             if (hasattr(tag, 'contents')):
@@ -336,12 +351,16 @@ class OfxParser(object):
                     statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
                 except IndexError:
                     statement.warnings.append(u'Empty end date.')
+                except ValueError as e:
+                    statement.warnings.append(u'Invalid end date: %s' % e)
+                    if cls_.fail_fast:
+                        raise
         
         try:
             for investment_ofx in invstmtrs_ofx.findAll('posmf'):
                 statement.positions.append(
                     cls_.parseInvestmentPosition(investment_ofx))
-        except (ValueError, IndexError, decimal.InvalidOperation) as e:
+        except (ValueError, IndexError, decimal.InvalidOperation, TypeError) as e:
             if cls_.fail_fast:
                 raise
             statement.discarded_entries.append(
@@ -406,6 +425,10 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise                
+            except ValueError:
+                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise                
                 
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
@@ -420,7 +443,11 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was not formatted correctly for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
-                
+            except TypeError:
+                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
+                if cls_.fail_fast:
+                    raise
+
         currency_tag = stmt_ofx.find('curdef')
         if hasattr(currency_tag, "contents"):
             try:
@@ -473,24 +500,42 @@ class OfxParser(object):
 
         type_tag = txn_ofx.find('trntype')
         if hasattr(type_tag, 'contents'):
-            transaction.type = type_tag.contents[0].lower().strip()
+            try:
+                transaction.type = type_tag.contents[0].lower().strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction type")
+            except TypeError:
+                raise OfxParserException(u"No Transaction type (a required field)")
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
-            transaction.payee = name_tag.contents[0].strip()
-
+            try:
+                transaction.payee = name_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction name")
+            except TypeError:
+                raise OfxParserException(u"No Transaction name (a required field)")
+                
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
-            transaction.memo = memo_tag.contents[0].strip()
+            try:
+                transaction.memo = memo_tag.contents[0].strip()
+            except IndexError:
+                # Memo can be empty.
+                pass
+            except TypeError:
+                pass
 
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
             try:
                 transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
             except IndexError:
-                raise
+                raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
                 raise OfxParserException(u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
+            except TypeError:
+                raise OfxParserException(u"No Transaction Amount (a required field)")
         else:
             raise OfxParserException(u"Missing Transaction Amount (a required field)")
 
@@ -503,12 +548,19 @@ class OfxParser(object):
                 raise OfxParserException("Invalid Transaction Date")
             except ValueError as ve:
                 raise OfxParserException(str(ve))
+            except TypeError:
+                raise OfxParserException(u"No Transaction Date (a required field)")
         else:
             raise OfxParserException(u"Missing Transaction Date (a required field)")
         
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
-            transaction.id = id_tag.contents[0].strip()
+            try:
+                transaction.id = id_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty FIT id (a required field)")
+            except TypeError:
+                raise OfxParserException(u"No FIT id (a required field)")
         else:
             raise OfxParserException(u"Missing FIT id (a required field)")
         
