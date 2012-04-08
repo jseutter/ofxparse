@@ -340,7 +340,7 @@ class OfxParser(object):
                     statement.warnings.append(u'Empty start date.')
                     if cls_.fail_fast:
                         raise
-                except ValueError as e:
+                except ValueError, e:
                     statement.warnings.append(u'Invalid start date: %s' % e)
                     if cls_.fail_fast:
                         raise
@@ -351,7 +351,7 @@ class OfxParser(object):
                     statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
                 except IndexError:
                     statement.warnings.append(u'Empty end date.')
-                except ValueError as e:
+                except ValueError, e:
                     statement.warnings.append(u'Invalid end date: %s' % e)
                     if cls_.fail_fast:
                         raise
@@ -360,7 +360,7 @@ class OfxParser(object):
             for investment_ofx in invstmtrs_ofx.findAll('posmf'):
                 statement.positions.append(
                     cls_.parseInvestmentPosition(investment_ofx))
-        except (ValueError, IndexError, decimal.InvalidOperation, TypeError) as e:
+        except (ValueError, IndexError, decimal.InvalidOperation, TypeError), e:
             if cls_.fail_fast:
                 raise
             statement.discarded_entries.append(
@@ -374,7 +374,7 @@ class OfxParser(object):
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
                         cls_.parseInvestmentTransaction(investment_ofx))
-            except (ValueError, IndexError, decimal.InvalidOperation) as e:
+            except (ValueError, IndexError, decimal.InvalidOperation), e:
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
@@ -439,7 +439,7 @@ class OfxParser(object):
                 statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
-            except ValueError as ve:
+            except ValueError, ve:
                 statement.warnings.append(u"Statement start date was not formatted correctly for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
@@ -484,7 +484,7 @@ class OfxParser(object):
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
                 statement.transactions.append(cls_.parseTransaction(transaction_ofx))
-            except OfxParserException as ofxError:
+            except OfxParserException, ofxError:
                 statement.discarded_entries.append({ 'error': str(ofxError), 'content': transaction_ofx })
                 if cls_.fail_fast:
                     raise
@@ -546,7 +546,7 @@ class OfxParser(object):
                     date_tag.contents[0].strip())
             except IndexError: 
                 raise OfxParserException("Invalid Transaction Date")
-            except ValueError as ve:
+            except ValueError, ve:
                 raise OfxParserException(str(ve))
             except TypeError:
                 raise OfxParserException(u"No Transaction Date (a required field)")
