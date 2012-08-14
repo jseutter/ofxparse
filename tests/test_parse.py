@@ -265,6 +265,43 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertEquals(len(ofx.account.statement.positions), 2)
         self.assertEquals(ofx.account.statement.positions[0].units, Decimal('102.0'))
 
+class TestAccountInfoAggregation(TestCase):
+    def testForFourAccounts(self):
+        ofx = OfxParser.parse(open_file('account_listing_aggregation.ofx'))
+        self.assertTrue(hasattr(ofx, 'accounts'))
+        self.assertEquals(len(ofx.accounts),4)
+
+        # first account
+        account = ofx.accounts[0]
+        self.assertEquals(account.account_type,'SAVINGS')
+        self.assertEquals(account.desc,'USAA SAVINGS')
+        self.assertEquals(account.institution.organization,'USAA')
+        self.assertEquals(account.number,'0000000001')
+        self.assertEquals(account.routing_number,'314074269')
+
+        # second
+        account = ofx.accounts[1]
+        self.assertEquals(account.account_type,'CHECKING')
+        self.assertEquals(account.desc,'FOUR STAR CHECKING')
+        self.assertEquals(account.institution.organization,'USAA')
+        self.assertEquals(account.number,'0000000002')
+        self.assertEquals(account.routing_number,'314074269')
+
+        # third
+        account = ofx.accounts[2]
+        self.assertEquals(account.account_type,'CREDITLINE')
+        self.assertEquals(account.desc,'LINE OF CREDIT')
+        self.assertEquals(account.institution.organization,'USAA')
+        self.assertEquals(account.number,'00000000000003')
+        self.assertEquals(account.routing_number,'314074269')
+
+        # fourth
+        account = ofx.accounts[3]
+        self.assertEquals(account.account_type,'')
+        self.assertEquals(account.desc,'MY CREDIT CARD')
+        self.assertEquals(account.institution.organization,'USAA')
+        self.assertEquals(account.number,'4111111111111111')
+
 class TestGracefulFailures(TestCase):
     ''' Test that when fail_fast is False, failures are returned to the
     caller as warnings and discarded entries in the Statement class.
