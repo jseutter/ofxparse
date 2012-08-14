@@ -202,6 +202,9 @@ class OfxParser(object):
             else:
                 ofx_obj.security_list = None
             return ofx_obj
+        acctinfors_ofx = ofx.find('acctinfors')
+        if acctinfors_ofx:
+            ofx_obj.accounts = cls_.parseAcctinfors(acctinfors_ofx,ofx)
         return ofx_obj
     
     @classmethod
@@ -226,6 +229,29 @@ class OfxParser(object):
         except:
             return datetime.datetime.strptime(
                 ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
+
+    @classmethod
+    def parseAcctinfors(cls_, acctinfors_ofx, ofx):
+        accounts = []
+        for i in acctinfors_ofx.findAll('acctinfo'):
+            account = None
+            if i.find('invacctinfo'):
+                account = cls_.parseInvstmtrs(i)
+            elif i.find('ccacctinfo'):
+                account = cls_.parseStmtrs( i, AccountType.CreditCard)
+            elif i.find('bankacctinfo'):
+                account = cls_.parseStmtrs( i, AccountType.Bank)
+            else:
+                continue
+
+            org_ofx = ofx.find('org')
+            if org_ofx:
+                account.institution = cls_.parseOrg(org_ofx)
+            desc = i.find('desc')
+            if hasattr(desc,'contents'):
+                account.desc = desc.contents[0].strip()
+            accounts.append(account)
+        return accounts
 
     @classmethod
     def parseInvstmtrs(cls_, invstmtrs_ofx):
