@@ -289,12 +289,17 @@ class OfxParser(object):
             name_tag = secinfo_ofx.find('secname')
             ticker_tag = secinfo_ofx.find('ticker')
             memo_tag = secinfo_ofx.find('memo')
-            if uniqueid_tag and name_tag and ticker_tag and memo_tag:
+            if uniqueid_tag and name_tag and ticker_tag:
+                try:
+                    memo = memo_tag.contents[0].strip()
+                except AttributeError:
+                    # memo can be empty
+                    memo = None
                 securityList.append(
                     Security(uniqueid_tag.contents[0].strip(),
                              name_tag.contents[0].strip(),
                              ticker_tag.contents[0].strip(),
-                             memo_tag.contents[0].strip()))
+                             memo))
         return securityList
 
     @classmethod
@@ -382,17 +387,18 @@ class OfxParser(object):
                     if cls_.fail_fast:
                         raise
         
-        try:
-            for investment_ofx in invstmtrs_ofx.findAll('posmf'):
-                statement.positions.append(
-                    cls_.parseInvestmentPosition(investment_ofx))
-        except (ValueError, IndexError, decimal.InvalidOperation, TypeError), e:
-            if cls_.fail_fast:
-                raise
-            statement.discarded_entries.append(
-                { u'error': u"Error parsing positions: " + str(e),
-                 u'content': investment_ofx }
-            )
+        for transaction_type in ['posmf', 'posstock']:
+            try:
+                for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
+                    statement.positions.append(
+                        cls_.parseInvestmentPosition(investment_ofx))
+            except (ValueError, IndexError, decimal.InvalidOperation, TypeError), e:
+                if cls_.fail_fast:
+                    raise
+                statement.discarded_entries.append(
+                    { u'error': u"Error parsing positions: " + str(e),
+                     u'content': investment_ofx }
+                )
         
         
         for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock']:
