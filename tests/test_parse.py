@@ -269,6 +269,11 @@ class TestVanguardInvestmentStatement(TestCase):
         ofx = OfxParser.parse(open_file('vanguard.ofx'))
         self.assertEquals(len(ofx.security_list), 2)
 
+class TestFidelityInvestmentStatement(TestCase):
+    def testSecurityListSuccess(self):
+        ofx = OfxParser.parse(open_file('fidelity.ofx'))
+        self.assertEquals(len(ofx.security_list), 7)
+
 class TestAccountInfoAggregation(TestCase):
     def testForFourAccounts(self):
         ofx = OfxParser.parse(open_file('account_listing_aggregation.ofx'))
