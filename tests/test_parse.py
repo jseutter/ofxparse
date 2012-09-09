@@ -270,6 +270,12 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertEquals(len(ofx.security_list), 2)
 
 class TestFidelityInvestmentStatement(TestCase):
+    def testForUnclosedTags(self):
+        ofx = OfxParser.parse(open_file('fidelity.ofx'))
+        self.assertTrue(hasattr(ofx.account.statement, 'positions'))
+        self.assertEquals(len(ofx.account.statement.positions), 6)
+        self.assertEquals(ofx.account.statement.positions[0].units, Decimal('128.0'))
+
     def testSecurityListSuccess(self):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
         self.assertEquals(len(ofx.security_list), 7)
