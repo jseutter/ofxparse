@@ -68,6 +68,26 @@ NEWFILEUID:NONE
             self.assertTrue(type(key) is unicode)
             self.assertTrue(type(value) is not str)
 
+    def testUTF8Japanese(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UTF-8
+CHARSET:CSUNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+""")
+        ofx_file = OfxFile(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+        
+        self.assertTrue(type(result) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
+
     def testBrokenLineEndings(self):
         fh = StringIO("OFXHEADER:100\rDATA:OFXSGML\r")
         ofx_file = OfxFile(fh)

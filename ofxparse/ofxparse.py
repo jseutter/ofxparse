@@ -42,7 +42,7 @@ class OfxFile(object):
                 cp = self.headers.get("CHARSET", "1252")
                 encoding = "cp%s" % (cp, )
 
-            elif enc_type == "UNICODE":
+            elif enc_type in ("UNICODE", "UTF-8"):
                 encoding = "utf-8"
             
             try:
