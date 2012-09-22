@@ -170,6 +170,8 @@ class TestStringToDate(TestCase):
             datetime(2012, 04, 12, 17, 30))
         self.assertEquals( OfxParser.parseOfxDateTime('20120412120000 [-5:XXX]'),
             datetime(2012, 04, 12, 17))
+        self.assertEquals( OfxParser.parseOfxDateTime('20120922230000 [+9:JST]'), 
+            datetime(2012, 9, 22, 14, 0) )
 
 class TestParseStmtrs(TestCase):
     input = '''
