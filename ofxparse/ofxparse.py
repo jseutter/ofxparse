@@ -42,7 +42,7 @@ class OfxFile(object):
                 cp = self.headers.get("CHARSET", "1252")
                 encoding = "cp%s" % (cp, )
 
-            elif enc_type == "UNICODE":
+            elif enc_type in ("UNICODE", "UTF-8"):
                 encoding = "utf-8"
             
             try:
@@ -213,7 +213,7 @@ class OfxParser(object):
         # for 6 Nov 2010 4pm UTC-5 aka EST
         
         # Some places (e.g. Newfoundland) have non-integer offsets.
-        res = re.search("\[(?P<tz>-?\d+\.?\d*)\:\w*\]$", ofxDateTime)
+        res = re.search("\[(?P<tz>[-+]?\d+\.?\d*)\:\w*\]$", ofxDateTime)
         if res:
             tz = float(res.group('tz'))
         else:
