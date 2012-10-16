@@ -1,7 +1,15 @@
 from setuptools import setup, find_packages
 
+# Read the version from __init__ to avoid importing ofxparse while installing.
+# This lets the install work when the user does not have BeautifulSoup
+# installed.
+import re
+VERSION = re.search(r"__version__ = '(.*?)'",
+                    open("ofxparse/__init__.py").read()).group(1)
+
+
 setup(name='ofxparse',
-      version="0.8",
+      version=VERSION,
       description="Tools for working with the OFX (Open Financial Exchange) file format",
       long_description=open("./README", "r").read(),
       # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
