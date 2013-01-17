@@ -173,38 +173,41 @@ class OfxParser(object):
         # Store the headers
         ofx_file = OfxFile(file_handle)
         ofx_obj.headers = ofx_file.headers
+        ofx_obj.accounts = []
 
         ofx = BeautifulStoneSoup(ofx_file.fh)
         if len(ofx.contents) == 0:
             raise OfxParserException('The ofx file is empty!')
             
-        stmtrs_ofx = ofx.find('stmtrs')
+        stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
-            return ofx_obj
-        ccstmtrs_ofx = ofx.find('ccstmtrs')
+            ofx_obj.accounts += cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
+
+        ccstmtrs_ofx = ofx.findAll('ccstmtrs')
         if ccstmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(
-                ccstmtrs_ofx, AccountType.CreditCard)
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
-            return ofx_obj
-        invstmtrs_ofx = ofx.find('invstmtrs')
+            ofx_obj.accounts += cls_.parseStmtrs(ccstmtrs_ofx, AccountType.CreditCard)
+
+        invstmtrs_ofx = ofx.findAll('invstmtrs')
         if invstmtrs_ofx:
-            ofx_obj.account = cls_.parseInvstmtrs(invstmtrs_ofx)
+            ofx_obj.accounts += cls_.parseInvstmtrs(invstmtrs_ofx)
             seclist_ofx = ofx.find('seclist')
             if seclist_ofx:
                 ofx_obj.security_list = cls_.parseSeclist(seclist_ofx)
             else:
                 ofx_obj.security_list = None
-            return ofx_obj
+        
         acctinfors_ofx = ofx.find('acctinfors')
         if acctinfors_ofx:
-            ofx_obj.accounts = cls_.parseAcctinfors(acctinfors_ofx,ofx)
+            ofx_obj.accounts += cls_.parseAcctinfors(acctinfors_ofx, ofx)
+
+        org_ofx = ofx.find('org')
+        if org_ofx:
+            for account in ofx_obj.accounts:
+                account.institution = cls_.parseOrg(org_ofx)
+
+        if ofx_obj.accounts:
+            ofx_obj.account = ofx_obj.accounts[0]
+
         return ofx_obj
     
     @classmethod
@@ -230,56 +233,61 @@ class OfxParser(object):
             return datetime.datetime.strptime(
                 ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
 
+
     @classmethod
     def parseAcctinfors(cls_, acctinfors_ofx, ofx):
-        accounts = []
+        all_accounts = []
         for i in acctinfors_ofx.findAll('acctinfo'):
-            account = None
+            accounts = []
             if i.find('invacctinfo'):
-                account = cls_.parseInvstmtrs(i)
+                accounts += cls_.parseInvstmtrs([ i ])
             elif i.find('ccacctinfo'):
-                account = cls_.parseStmtrs( i, AccountType.CreditCard)
+                accounts += cls_.parseStmtrs( [ i ], AccountType.CreditCard)
             elif i.find('bankacctinfo'):
-                account = cls_.parseStmtrs( i, AccountType.Bank)
+                accounts += cls_.parseStmtrs( [ i ], AccountType.Bank)
             else:
                 continue
 
             org_ofx = ofx.find('org')
             if org_ofx:
-                account.institution = cls_.parseOrg(org_ofx)
+                for account in accounts:
+                    account.institution = cls_.parseOrg(org_ofx)
             desc = i.find('desc')
             if hasattr(desc,'contents'):
-                account.desc = desc.contents[0].strip()
-            accounts.append(account)
-        return accounts
+                for account in accounts:
+                    account.desc = desc.contents[0].strip()
+            all_accounts += accounts
+        return all_accounts
 
     @classmethod
-    def parseInvstmtrs(cls_, invstmtrs_ofx):
-        account = InvestmentAccount()
-        acctid_tag = invstmtrs_ofx.find('acctid')
-        if (hasattr(acctid_tag, 'contents')):
-            try:
-                account.number = acctid_tag.contents[0].strip()
-            except IndexError:
-                account.warnings.append(u"Empty acctid tag for %s" % invstmtrs_ofx)
-                if cls_.fail_fast:
-                    raise
+    def parseInvstmtrs(cls_, invstmtrs_list):
+        ret = []
+        for invstmtrs_ofx in invstmtrs_list:
+            account = InvestmentAccount()
+            acctid_tag = invstmtrs_ofx.find('acctid')
+            if (hasattr(acctid_tag, 'contents')):
+                try:
+                    account.number = acctid_tag.contents[0].strip()
+                except IndexError:
+                    account.warnings.append(u"Empty acctid tag for %s" % invstmtrs_ofx)
+                    if cls_.fail_fast:
+                        raise
                     
-        brokerid_tag = invstmtrs_ofx.find('brokerid')
-        if (hasattr(brokerid_tag, 'contents')):
-            try:
-                account.brokerid = brokerid_tag.contents[0].strip()
-            except IndexError:
-                account.warnings.append(u"Empty brokerid tag for %s" % invstmtrs_ofx)
-                if cls_.fail_fast:
-                    raise
-                    
-        account.type = AccountType.Investment
-        
-        if (invstmtrs_ofx):
-            account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
-        
-        return account
+            brokerid_tag = invstmtrs_ofx.find('brokerid')
+            if (hasattr(brokerid_tag, 'contents')):
+                try:
+                    account.brokerid = brokerid_tag.contents[0].strip()
+                except IndexError:
+                    account.warnings.append(u"Empty brokerid tag for %s" % invstmtrs_ofx)
+                    if cls_.fail_fast:
+                        raise
+
+            account.type = AccountType.Investment
+
+            if (invstmtrs_ofx):
+                account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
+            ret.append(account)
+        return ret
     
     @classmethod
     def parseSeclist(cls_, seclist_ofx):
@@ -424,23 +432,26 @@ class OfxParser(object):
         return institution
 
     @classmethod
-    def parseStmtrs(cls_, stmtrs_ofx, accountType):
-        ''' Parse the <STMTRS> tag and return an Account object. '''
-        account = Account()
-        acctid_tag = stmtrs_ofx.find('acctid')
-        if hasattr(acctid_tag, 'contents'):
-            account.number = acctid_tag.contents[0].strip()
-        bankid_tag = stmtrs_ofx.find('bankid')
-        if hasattr(bankid_tag, 'contents'):
-            account.routing_number = bankid_tag.contents[0].strip()
-        type_tag = stmtrs_ofx.find('accttype')
-        if hasattr(type_tag, 'contents'):
-            account.account_type = type_tag.contents[0].strip()
-        account.type = accountType
+    def parseStmtrs(cls_, stmtrs_list, accountType):
+        ''' Parse the <STMTRS> tags and return a list of Accounts object. '''
+        ret = []
+        for stmtrs_ofx in stmtrs_list:
+            account = Account()
+            acctid_tag = stmtrs_ofx.find('acctid')
+            if hasattr(acctid_tag, 'contents'):
+                account.number = acctid_tag.contents[0].strip()
+            bankid_tag = stmtrs_ofx.find('bankid')
+            if hasattr(bankid_tag, 'contents'):
+                account.routing_number = bankid_tag.contents[0].strip()
+            type_tag = stmtrs_ofx.find('accttype')
+            if hasattr(type_tag, 'contents'):
+                account.account_type = type_tag.contents[0].strip()
+            account.type = accountType
 
-        if stmtrs_ofx:
-            account.statement = cls_.parseStatement(stmtrs_ofx)
-        return account
+            if stmtrs_ofx:
+                account.statement = cls_.parseStatement(stmtrs_ofx)
+            ret.append(account)
+        return ret
     
     @classmethod
     def parseStatement(cls_, stmt_ofx):

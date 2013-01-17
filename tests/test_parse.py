@@ -132,6 +132,16 @@ class TestParse(TestCase):
         self.assertEquals(Decimal('-6.60'), transaction.amount)
         # Todo: support values in decimal or int form.
         #self.assertEquals('15', transaction.amount_in_pennies)
+
+    def testMultipleAccounts(self):
+        ofx = OfxParser.parse(open_file('multiple_accounts2.ofx'))
+        self.assertEquals(2, len(ofx.accounts))
+        self.assertEquals('9100', ofx.accounts[0].number)
+        self.assertEquals('9200', ofx.accounts[1].number)
+        self.assertEquals('123', ofx.accounts[0].routing_number)
+        self.assertEquals('123', ofx.accounts[1].routing_number)
+        self.assertEquals('CHECKING', ofx.accounts[0].account_type)
+        self.assertEquals('SAVINGS', ofx.accounts[1].account_type)
         
 class TestStringToDate(TestCase):
     ''' Test the string to date parser '''
@@ -183,7 +193,7 @@ class TestParseStmtrs(TestCase):
     
     def testThatParseStmtrsReturnsAnAccount(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)
+        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
         self.assertEquals('CHECKING', account.account_type)
@@ -191,7 +201,7 @@ class TestParseStmtrs(TestCase):
     
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)
+        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertTrue(hasattr(account, 'statement'))
         
 class TestAccount(TestCase):
@@ -370,3 +380,7 @@ class TestGracefulFailures(TestCase):
         
         # Test that it raises an error otherwise.
         self.assertRaises(OfxParserException, OfxParser.parse, open_file('fail_nice/decimal_error.ofx'))
+
+if __name__ == "__main__":
+    import unittest
+    unittest.main()
