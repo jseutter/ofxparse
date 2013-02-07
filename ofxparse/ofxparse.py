@@ -121,6 +121,7 @@ class Transaction(object):
         self.amount = None
         self.id = ''
         self.memo = ''
+        self.sic = None
     
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
@@ -606,6 +607,13 @@ class OfxParser(object):
                 raise OfxParserException(u"No FIT id (a required field)")
         else:
             raise OfxParserException(u"Missing FIT id (a required field)")
+
+        sic_tag = txn_ofx.find('sic')
+        if hasattr(sic_tag, 'contents'):
+            try:
+				transaction.sic = sic_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction sic")
         
         return transaction
 
