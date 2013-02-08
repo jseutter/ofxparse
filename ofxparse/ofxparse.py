@@ -621,7 +621,6 @@ class OfxParser(object):
 		
         if transaction.sic is not None:
             try:
-                print mcc.codes.get(transaction.sic).get('combined description')
                 transaction.mcc = mcc.codes.get(transaction.sic).get('combined description')
             except IndexError:
                 raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
