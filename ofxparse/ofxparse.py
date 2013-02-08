@@ -1,7 +1,9 @@
 from BeautifulSoup import BeautifulStoneSoup
 import decimal, datetime
 import codecs
+import mcc
 import re
+from pprint import pprint
 
 
 class OfxFile(object):
@@ -122,6 +124,8 @@ class Transaction(object):
         self.id = ''
         self.memo = ''
         self.sic = None
+        self.mcc = ''
+
     
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
@@ -613,7 +617,15 @@ class OfxParser(object):
             try:
 				transaction.sic = sic_tag.contents[0].strip()
             except IndexError:
-                raise OfxParserException(u"Empty transaction sic")
+                raise OfxParserException(u"Empty transaction Standard Industry Code (SIC)")
+		
+        if transaction.sic is not None:
+            try:
+                print mcc.codes.get(transaction.sic).get('combined description')
+                transaction.mcc = mcc.codes.get(transaction.sic).get('combined description')
+            except IndexError:
+                raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
+				
         
         return transaction
 
