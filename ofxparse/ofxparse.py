@@ -3,7 +3,6 @@ import decimal, datetime
 import codecs
 import mcc
 import re
-from pprint import pprint
 
 
 class OfxFile(object):
