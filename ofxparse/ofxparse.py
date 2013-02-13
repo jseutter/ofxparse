@@ -4,7 +4,6 @@ import codecs
 import mcc
 import re
 
-
 class OfxFile(object):
     def __init__(self, fh):
         self.headers = {}
@@ -76,7 +75,7 @@ class AccountType(object):
 class Account(object):
     def __init__(self):
         self.statement = None
-        self.number = ''
+        self.account_id = ''
         self.routing_number = ''
         self.account_type = ''
         self.institution = None
@@ -149,6 +148,7 @@ class Position(object):
 class Institution(object):
     def __init__(self):
         self.organization = ''
+        self.fid = ''
 
 class OfxParserException(Exception):
     pass
@@ -204,10 +204,10 @@ class OfxParser(object):
         if acctinfors_ofx:
             ofx_obj.accounts += cls_.parseAcctinfors(acctinfors_ofx, ofx)
 
-        org_ofx = ofx.find('org')
-        if org_ofx:
+        fi_ofx = ofx.find('fi')
+        if fi_ofx:
             for account in ofx_obj.accounts:
-                account.institution = cls_.parseOrg(org_ofx)
+                account.institution = cls_.parseOrg(fi_ofx)
 
         if ofx_obj.accounts:
             ofx_obj.account = ofx_obj.accounts[0]
@@ -252,10 +252,10 @@ class OfxParser(object):
             else:
                 continue
 
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                for account in accounts:
-                    account.institution = cls_.parseOrg(org_ofx)
+	        fi_ofx = ofx.find('fi')
+	        if fi_ofx:
+	            for account in ofx_obj.accounts:
+	                account.institution = cls_.parseOrg(fi_ofx)
             desc = i.find('desc')
             if hasattr(desc,'contents'):
                 for account in accounts:
@@ -271,7 +271,7 @@ class OfxParser(object):
             acctid_tag = invstmtrs_ofx.find('acctid')
             if (hasattr(acctid_tag, 'contents')):
                 try:
-                    account.number = acctid_tag.contents[0].strip()
+                    account.account_id = acctid_tag.contents[0].strip()
                 except IndexError:
                     account.warnings.append(u"Empty acctid tag for %s" % invstmtrs_ofx)
                     if cls_.fail_fast:
@@ -429,10 +429,16 @@ class OfxParser(object):
         return statement
     
     @classmethod
-    def parseOrg(cls_, org_ofx):
+    def parseOrg(cls_, fi_ofx):
         institution = Institution()
-        if hasattr(org_ofx, 'contents'):
-            institution.organization = org_ofx.contents[0].strip()
+        org = fi_ofx.find('org')
+        if hasattr(org, 'contents'):
+            institution.organization = org.contents[0].strip()
+		
+        fid = fi_ofx.find('fid')
+        if hasattr(fid, 'contents'):
+            institution.fid = fid.contents[0].strip()
+
         return institution
 
     @classmethod
@@ -443,7 +449,7 @@ class OfxParser(object):
             account = Account()
             acctid_tag = stmtrs_ofx.find('acctid')
             if hasattr(acctid_tag, 'contents'):
-                account.number = acctid_tag.contents[0].strip()
+                account.account_id = acctid_tag.contents[0].strip()
             bankid_tag = stmtrs_ofx.find('bankid')
             if hasattr(bankid_tag, 'contents'):
                 account.routing_number = bankid_tag.contents[0].strip()
@@ -620,7 +626,7 @@ class OfxParser(object):
 		
         if transaction.sic is not None:
             try:
-                transaction.mcc = mcc.codes.get(transaction.sic).get('combined description')
+                transaction.mcc = mcc.codes.get(transaction.sic, '').get('combined description')
             except IndexError:
                 raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
 				
