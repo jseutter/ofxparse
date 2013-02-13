@@ -388,7 +388,7 @@ class OfxParser(object):
         if hasattr(currency_tag, "contents"):
             statement.currency = currency_tag.contents[0].strip().lower()
         invtranlist_ofx = invstmtrs_ofx.find('invtranlist')
-        if (invtranlist_ofx != None):
+        if (invtranlist_ofx is not None):
             tag = invtranlist_ofx.find('dtstart')
             if (hasattr(tag, 'contents')):
                 try:
@@ -420,7 +420,8 @@ class OfxParser(object):
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.positions.append(
                         cls_.parseInvestmentPosition(investment_ofx))
-            except (ValueError, IndexError, decimal.InvalidOperation, TypeError), e:
+            except (ValueError, IndexError, decimal.InvalidOperation,
+                    TypeError), e:
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
@@ -428,7 +429,8 @@ class OfxParser(object):
                      u'content': investment_ofx}
                 )
 
-        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock']:
+        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
+                                 'sellstock']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
@@ -506,7 +508,8 @@ class OfxParser(object):
                     raise
             except ValueError, ve:
                 statement.warnings.append(
-                    u"Statement start date was not formatted correctly for %s" % stmt_ofx)
+                    u"Statement start date was not formatted correctly for"
+                    u" %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except TypeError:
@@ -546,8 +549,8 @@ class OfxParser(object):
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
                 except IndexError:
-                    statement.warnings.append(
-                        u"Available balance amount was empty for %s" % stmt_ofx)
+                    statement.warnings.append(u"Available balance amount was"
+                                              u" empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
                         raise
 

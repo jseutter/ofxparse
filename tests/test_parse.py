@@ -109,7 +109,7 @@ class TestParse(TestCase):
 
     def testThatParseReturnsAResultWithABankAccount(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
-        self.assertTrue(ofx.account != None)
+        self.assertTrue(ofx.account is not None)
 
     def testEverything(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
@@ -162,7 +162,7 @@ class TestStringToDate(TestCase):
         self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
 
     def test_parses_correct_time(self):
-        ''' Test whether it can parse correct time for some valid time fields '''
+        '''Test whether it can parse correct time for some valid time fields'''
         self.assertEquals(OfxParser.parseOfxDateTime('19881201'),
                           datetime(1988, 12, 1, 0, 0))
         self.assertEquals(OfxParser.parseOfxDateTime('19881201230100'),
@@ -228,11 +228,42 @@ class TestAccount(TestCase):
 class TestParseStatement(TestCase):
     def testThatParseStatementReturnsAStatement(self):
         input = '''
-<STMTTRNRS><TRNUID>20090523122017<STATUS><CODE>0<SEVERITY>INFO<MESSAGE>OK</STATUS>
-<STMTRS><CURDEF>CAD<BANKACCTFROM><BANKID>160000100<ACCTID>12300 000012345678<ACCTTYPE>CHECKING</BANKACCTFROM>
-<BANKTRANLIST><DTSTART>20090401<DTEND>20090523122017
-<STMTTRN><TRNTYPE>POS<DTPOSTED>20090401122017.000[-5:EST]<TRNAMT>-6.60<FITID>0000123456782009040100001<NAME>MCDONALD'S #112<MEMO>POS MERCHANDISE;MCDONALD'S #112</STMTTRN>
-</BANKTRANLIST><LEDGERBAL><BALAMT>382.34<DTASOF>20090523122017</LEDGERBAL><AVAILBAL><BALAMT>682.34<DTASOF>20090523122017</AVAILBAL></STMTRS></STMTTRNRS>
+<STMTTRNRS>
+ <TRNUID>20090523122017
+ <STATUS>
+  <CODE>0
+  <SEVERITY>INFO
+  <MESSAGE>OK
+ </STATUS>
+ <STMTRS>
+  <CURDEF>CAD
+  <BANKACCTFROM>
+   <BANKID>160000100
+   <ACCTID>12300 000012345678
+   <ACCTTYPE>CHECKING
+  </BANKACCTFROM>
+  <BANKTRANLIST>
+   <DTSTART>20090401
+   <DTEND>20090523122017
+   <STMTTRN>
+    <TRNTYPE>POS
+    <DTPOSTED>20090401122017.000[-5:EST]
+    <TRNAMT>-6.60
+    <FITID>0000123456782009040100001
+    <NAME>MCDONALD'S #112
+    <MEMO>POS MERCHANDISE;MCDONALD'S #112
+   </STMTTRN>
+  </BANKTRANLIST>
+  <LEDGERBAL>
+   <BALAMT>382.34
+   <DTASOF>20090523122017
+  </LEDGERBAL>
+  <AVAILBAL>
+   <BALAMT>682.34
+   <DTASOF>20090523122017
+  </AVAILBAL>
+ </STMTRS>
+</STMTTRNRS>
         '''
         txn = BeautifulStoneSoup(input)
         statement = OfxParser.parseStatement(txn.find('stmttrnrs'))
@@ -255,8 +286,15 @@ class TestStatement(TestCase):
 class TestParseTransaction(TestCase):
     def testThatParseTransactionReturnsATransaction(self):
         input = '''
-        <STMTTRN><TRNTYPE>POS<DTPOSTED>20090401122017.000[-5:EST]<TRNAMT>-6.60<FITID>0000123456782009040100001<NAME>MCDONALD'S #112<MEMO>POS MERCHANDISE;MCDONALD'S #112</STMTTRN>
-        '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>-6.60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
         txn = BeautifulStoneSoup(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('pos', transaction.type)

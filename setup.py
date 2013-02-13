@@ -10,7 +10,8 @@ VERSION = re.search(r"__version__ = '(.*?)'",
 
 setup(name='ofxparse',
       version=VERSION,
-      description="Tools for working with the OFX (Open Financial Exchange) file format",
+      description=("Tools for working with the OFX (Open Financial Exchange)"
+                   " file format"),
       long_description=open("./README", "r").read(),
       # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
