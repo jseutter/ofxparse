@@ -21,7 +21,8 @@ class TestOfxFile(TestCase):
                   "CHARSET": u"1252",
                   "COMPRESSION": None,
                   "OLDFILEUID": None,
-                  "NEWFILEUID": None}
+                  "NEWFILEUID": None,
+                  }
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertEquals(expect, ofx.headers)
 
@@ -117,13 +118,14 @@ class TestParse(TestCase):
         self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
         # Todo: support values in decimal or int form.
-        #self.assertEquals('15', ofx.bank_account.statement.balance_in_pennies)
-        self.assertEquals(Decimal('682.34'),
-                          ofx.account.statement.available_balance)
-        self.assertEquals(datetime(2009, 4, 1),
-                          ofx.account.statement.start_date)
-        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
-                          ofx.account.statement.end_date)
+        # self.assertEquals('15',
+        # ofx.bank_account.statement.balance_in_pennies)
+        self.assertEquals(
+            Decimal('682.34'), ofx.account.statement.available_balance)
+        self.assertEquals(
+            datetime(2009, 4, 1), ofx.account.statement.start_date)
+        self.assertEquals(
+            datetime(2009, 5, 23, 12, 20, 17), ofx.account.statement.end_date)
 
         self.assertEquals(3, len(ofx.account.statement.transactions))
 
@@ -132,7 +134,7 @@ class TestParse(TestCase):
         self.assertEquals('pos', transaction.type)
         self.assertEquals(Decimal('-6.60'), transaction.amount)
         # Todo: support values in decimal or int form.
-        #self.assertEquals('15', transaction.amount_in_pennies)
+        # self.assertEquals('15', transaction.amount_in_pennies)
 
     def testMultipleAccounts(self):
         ofx = OfxParser.parse(open_file('multiple_accounts2.ofx'))
@@ -162,18 +164,18 @@ class TestStringToDate(TestCase):
     def test_parses_correct_time(self):
         '''Test whether it can parse correct time for some valid time fields'''
         self.assertEquals(OfxParser.parseOfxDateTime('19881201'),
-            datetime(1988, 12, 1, 0, 0))
+                          datetime(1988, 12, 1, 0, 0))
         self.assertEquals(OfxParser.parseOfxDateTime('19881201230100'),
-            datetime(1988, 12, 1, 23, 01))
+                          datetime(1988, 12, 1, 23, 01))
         self.assertEquals(OfxParser.parseOfxDateTime('20120229230100'),
-            datetime(2012, 2, 29, 23, 01))
+                          datetime(2012, 2, 29, 23, 01))
 
     def test_parses_time_offset(self):
         ''' Test that we handle GMT offset '''
         self.assertEquals(OfxParser.parseOfxDateTime('20001201120000 [0:GMT]'),
-            datetime(2000, 12, 1, 12, 0))
+                          datetime(2000, 12, 1, 12, 0))
         self.assertEquals(OfxParser.parseOfxDateTime('19991201120000 [1:ITT]'),
-            datetime(1999, 12, 1, 11, 0))
+                          datetime(1999, 12, 1, 11, 0))
         self.assertEquals(
             OfxParser.parseOfxDateTime('19881201230100 [-5:EST]'),
             datetime(1988, 12, 2, 4, 1))
@@ -201,16 +203,16 @@ class TestParseStmtrs(TestCase):
 
     def testThatParseStmtrsReturnsAnAccount(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'),
-                                        AccountType.Bank)[0]
+        account = OfxParser.parseStmtrs(
+            stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
         self.assertEquals('CHECKING', account.account_type)
 
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = BeautifulStoneSoup(self.input)
-        account = OfxParser.parseStmtrs(stmtrs.find('stmtrs'),
-                                        AccountType.Bank)[0]
+        account = OfxParser.parseStmtrs(
+            stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertTrue(hasattr(account, 'statement'))
 
 
@@ -266,8 +268,8 @@ class TestParseStatement(TestCase):
         txn = BeautifulStoneSoup(input)
         statement = OfxParser.parseStatement(txn.find('stmttrnrs'))
         self.assertEquals(datetime(2009, 4, 1), statement.start_date)
-        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
-                          statement.end_date)
+        self.assertEquals(
+            datetime(2009, 5, 23, 12, 20, 17), statement.end_date)
         self.assertEquals(1, len(statement.transactions))
         self.assertEquals(Decimal('382.34'), statement.balance)
         self.assertEquals(Decimal('682.34'), statement.available_balance)
@@ -296,9 +298,8 @@ class TestParseTransaction(TestCase):
         txn = BeautifulStoneSoup(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('pos', transaction.type)
-        self.assertEquals(
-            datetime(2009, 4, 1, 12, 20, 17) - timedelta(hours=-5),
-            transaction.date)
+        self.assertEquals(datetime(
+            2009, 4, 1, 12, 20, 17) - timedelta(hours=-5), transaction.date)
         self.assertEquals(Decimal('-6.60'), transaction.amount)
         self.assertEquals('0000123456782009040100001', transaction.id)
         self.assertEquals("MCDONALD'S #112", transaction.payee)
@@ -338,7 +339,8 @@ class TestInvestmentAccount(TestCase):
 
     def testThatParseCanCreateAnInvestmentAccount(self):
         OfxParser.parse(StringIO(self.sample))
-        #Success!
+        # Success!
+
 
 
 class TestVanguardInvestmentStatement(TestCase):
@@ -350,14 +352,14 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertEquals(len(ofx.account.statement.transactions), 1)
         self.assertEquals(ofx.account.statement.transactions[0].id,
                           '01234567890.0123.07152011.0')
-        self.assertEquals(ofx.account.statement.transactions[0].tradeDate,
-                          datetime(2011, 7, 15, 21))
-        self.assertEquals(ofx.account.statement.transactions[0].settleDate,
-                          datetime(2011, 7, 15, 21))
+        self.assertEquals(ofx.account.statement.transactions[0]
+                          .tradeDate, datetime(2011, 7, 15, 21))
+        self.assertEquals(ofx.account.statement.transactions[0]
+                          .settleDate, datetime(2011, 7, 15, 21))
         self.assertTrue(hasattr(ofx.account.statement, 'positions'))
         self.assertEquals(len(ofx.account.statement.positions), 2)
-        self.assertEquals(ofx.account.statement.positions[0].units,
-                          Decimal('102.0'))
+        self.assertEquals(
+            ofx.account.statement.positions[0].units, Decimal('102.0'))
 
     def testSecurityListSuccess(self):
         ofx = OfxParser.parse(open_file('vanguard.ofx'))
@@ -369,8 +371,8 @@ class TestFidelityInvestmentStatement(TestCase):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
         self.assertTrue(hasattr(ofx.account.statement, 'positions'))
         self.assertEquals(len(ofx.account.statement.positions), 6)
-        self.assertEquals(ofx.account.statement.positions[0].units,
-                          Decimal('128.0'))
+        self.assertEquals(
+            ofx.account.statement.positions[0].units, Decimal('128.0'))
 
     def testSecurityListSuccess(self):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))

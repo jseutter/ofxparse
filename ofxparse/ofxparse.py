@@ -1,6 +1,6 @@
 from BeautifulSoup import BeautifulStoneSoup
-import datetime
 import decimal
+import datetime
 import codecs
 import re
 
@@ -199,8 +199,8 @@ class OfxParser(object):
 
         ccstmtrs_ofx = ofx.findAll('ccstmtrs')
         if ccstmtrs_ofx:
-            ofx_obj.accounts += cls_.parseStmtrs(ccstmtrs_ofx,
-                                                 AccountType.CreditCard)
+            ofx_obj.accounts += cls_.parseStmtrs(
+                ccstmtrs_ofx, AccountType.CreditCard)
 
         invstmtrs_ofx = ofx.findAll('invstmtrs')
         if invstmtrs_ofx:
@@ -283,8 +283,8 @@ class OfxParser(object):
                 try:
                     account.number = acctid_tag.contents[0].strip()
                 except IndexError:
-                    account.warnings.append(u"Empty acctid tag for %s" %
-                                            invstmtrs_ofx)
+                    account.warnings.append(
+                        u"Empty acctid tag for %s" % invstmtrs_ofx)
                     if cls_.fail_fast:
                         raise
 
@@ -293,8 +293,8 @@ class OfxParser(object):
                 try:
                     account.brokerid = brokerid_tag.contents[0].strip()
                 except IndexError:
-                    account.warnings.append(u"Empty brokerid tag for %s" %
-                                            invstmtrs_ofx)
+                    account.warnings.append(
+                        u"Empty brokerid tag for %s" % invstmtrs_ofx)
                     if cls_.fail_fast:
                         raise
 
@@ -486,13 +486,13 @@ class OfxParser(object):
                 statement.start_date = cls_.parseOfxDateTime(
                     dtstart_tag.contents[0].strip())
             except IndexError:
-                statement.warnings.append(u"Statement start date was empty"
-                                          u" for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except ValueError:
-                statement.warnings.append(u"Statement start date was not"
-                                          u" allowed for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -502,19 +502,19 @@ class OfxParser(object):
                 statement.end_date = cls_.parseOfxDateTime(
                     dtend_tag.contents[0].strip())
             except IndexError:
-                statement.warnings.append(u"Statement start date was empty for"
-                                          u" %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except ValueError, ve:
-                statement.warnings.append(u"Statement start date was not"
-                                          u" formatted correctly for %s" %
-                                          stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not formatted correctly for"
+                    u" %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except TypeError:
-                statement.warnings.append(u"Statement start date was not"
-                                          u" allowed for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -523,8 +523,8 @@ class OfxParser(object):
             try:
                 statement.currency = currency_tag.contents[0].strip().lower()
             except IndexError:
-                statement.warnings.append(u"Currency definition was empty for"
-                                          u" %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Currency definition was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -536,8 +536,8 @@ class OfxParser(object):
                     statement.balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
                 except IndexError:
-                    statement.warnings.append(u"Ledger balance amount was"
-                                              u" empty for %s" % stmt_ofx)
+                    statement.warnings.append(
+                        u"Ledger balance amount was empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
                         raise
 
@@ -580,8 +580,8 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(u"Empty transaction type")
             except TypeError:
-                raise OfxParserException(u"No Transaction type"
-                                         u" (a required field)")
+                raise OfxParserException(
+                    u"No Transaction type (a required field)")
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
@@ -590,8 +590,8 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(u"Empty transaction name")
             except TypeError:
-                raise OfxParserException(u"No Transaction name"
-                                         u" (a required field)")
+                raise OfxParserException(
+                    u"No Transaction name (a required field)")
 
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
@@ -611,14 +611,14 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
-                raise OfxParserException(u"Invalid Transaction Amount: '%s'" %
-                                         amt_tag.contents[0])
+                raise OfxParserException(
+                    u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
             except TypeError:
-                raise OfxParserException(u"No Transaction Amount"
-                                         u" (a required field)")
+                raise OfxParserException(
+                    u"No Transaction Amount (a required field)")
         else:
-            raise OfxParserException(u"Missing Transaction Amount"
-                                     u" (a required field)")
+            raise OfxParserException(
+                u"Missing Transaction Amount (a required field)")
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
@@ -630,11 +630,11 @@ class OfxParser(object):
             except ValueError, ve:
                 raise OfxParserException(str(ve))
             except TypeError:
-                raise OfxParserException(u"No Transaction Date"
-                                         u" (a required field)")
+                raise OfxParserException(
+                    u"No Transaction Date (a required field)")
         else:
-            raise OfxParserException(u"Missing Transaction Date"
-                                     u" (a required field)")
+            raise OfxParserException(
+                u"Missing Transaction Date (a required field)")
 
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):

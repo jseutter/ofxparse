@@ -10,8 +10,8 @@ VERSION = re.search(r"__version__ = '(.*?)'",
 
 setup(name='ofxparse',
       version=VERSION,
-      description="Tools for working with the OFX (Open Financial Exchange)"
-                  " file format",
+      description=("Tools for working with the OFX (Open Financial Exchange)"
+                   " file format"),
       long_description=open("./README", "r").read(),
       # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
@@ -23,7 +23,7 @@ setup(name='ofxparse',
           "Topic :: Software Development :: Libraries :: Python Modules",
           "Topic :: Utilities",
           "License :: OSI Approved :: MIT License",
-          ],
+      ],
       keywords='ofx, Open Financial Exchange, file formats',
       author='Jerry Seutter',
       author_email='jseutter.ofxparse@gmail.com',
