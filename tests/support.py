@@ -1,5 +1,6 @@
 import os
 
+
 def open_file(filename):
     ''' Load a file from the fixtures directory. '''
     path = 'fixtures/' + filename
