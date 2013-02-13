@@ -2,7 +2,7 @@ ofxparse
 ========
 
 ofxparse is a parser for Open Financial Exchange (.ofx) format files.  OFX files
-are available from almost any online banking site, so they work well if you 
+are available from almost any online banking site, so they work well if you
 want to pull together your finances from multiple sources.  Online trading accounts
 also provide account statements in OFX files.
 
@@ -36,10 +36,16 @@ I'm looking for different types of accounts to make this library more robust.  I
 credit account or investment account files.  Please (anonymize first) and mail to jseutter dot ofxparse
 at gmail dot com.
 
-Tests
-=====
+Development
+===========
 
-Run the tests with python::
+Prerequisites::
+(Ubuntu) sudo apt-get install python-beautifulsoup python-nose
+(pip) pip install BeautifulSoup nose
+
+Tests::
+Simply running the "nose" command should run the tests.  If you don't have nose
+installed, the following might also work:
 
   python -m unittest tests.test_parse
 
@@ -51,7 +57,7 @@ http://sites.google.com/site/ofxparse
 License
 =======
 
-ofxparse is released under an MIT license.  See the LICENSE file for the actual 
+ofxparse is released under an MIT license.  See the LICENSE file for the actual
 license text.  The basic idea is that if you can use Python to do what you are
 doing, you can also use this library.
 
