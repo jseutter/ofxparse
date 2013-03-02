@@ -87,6 +87,11 @@ class Account(object):
         # Used for error tracking
         self.warnings = []
 
+    @property
+    def number(self):
+        # For backwards compatibility.  Remove in version 1.0.
+        return self.account_id
+
 
 class InvestmentAccount(Account):
     def __init__(self):
