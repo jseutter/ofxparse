@@ -451,6 +451,18 @@ class TestGracefulFailures(TestCase):
         self.assertRaises(OfxParserException, OfxParser.parse,
                           open_file('fail_nice/decimal_error.ofx'))
 
+    def testEmptyBalance(self):
+        """
+        Empty balance values should be converted to None's
+        """
+        ofx = OfxParser.parse(open_file('fail_nice/empty_balance.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 1)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 0)
+
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse,
+                          open_file('fail_nice/empty_balance.ofx'))
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
