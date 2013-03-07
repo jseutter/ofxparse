@@ -451,6 +451,20 @@ class TestGracefulFailures(TestCase):
         self.assertRaises(OfxParserException, OfxParser.parse,
                           open_file('fail_nice/decimal_error.ofx'))
 
+    def testEmptyBalance(self):
+        ''' The test file contains empty or blank strings in the balance
+        fields. Fail nicely on those.
+        '''
+        ofx = OfxParser.parse(open_file('fail_nice/empty_balance.ofx'), False)
+        self.assertEquals(len(ofx.account.statement.transactions), 1)
+        self.assertEquals(len(ofx.account.statement.discarded_entries), 0)
+        self.assertFalse(hasattr(ofx.account.statement, 'balance'))
+        self.assertFalse(hasattr(ofx.account.statement, 'available_balance'))
+
+        # Test that it raises an error otherwise.
+        self.assertRaises(OfxParserException, OfxParser.parse,
+                          open_file('fail_nice/empty_balance.ofx'))
+
 if __name__ == "__main__":
     import unittest
     unittest.main()

@@ -549,11 +549,11 @@ class OfxParser(object):
                 try:
                     statement.balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except IndexError:
+                except (IndexError, decimal.InvalidOperation), ex:
                     statement.warnings.append(
                         u"Ledger balance amount was empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
-                        raise
+                        raise OfxParserException("Empty ledger balance")
 
         avail_bal_tag = stmt_ofx.find('availbal')
         if hasattr(avail_bal_tag, "contents"):
@@ -562,11 +562,11 @@ class OfxParser(object):
                 try:
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except IndexError:
+                except (IndexError, decimal.InvalidOperation), ex:
                     statement.warnings.append(u"Available balance amount was"
                                               u" empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
-                        raise
+                        raise OfxParserException("Empty available balance")
 
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
