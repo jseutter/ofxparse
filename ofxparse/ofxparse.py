@@ -4,6 +4,7 @@ import datetime
 import codecs
 import mcc
 import re
+import StringIO
 
 class OfxFile(object):
     def __init__(self, fh):
@@ -66,6 +67,42 @@ class OfxFile(object):
                 self.headers = uheaders
         # Reset the fh to the original position
         self.fh.seek(orig_pos)
+
+
+class OfxPreprocessedFile(OfxFile):
+    def __init__(self, fh):
+        super(OfxPreprocessedFile,self).__init__(fh)
+
+        if self.fh is None:
+            return
+
+        ofx_string = self.fh.read()
+
+        # find all closing tags as hints
+        closing_tags = [ t.upper() for t in re.findall(r'</([a-z0-9_]+)>', ofx_string, flags=re.I) ]
+
+        # close all tags that don't have closing tags and
+        # leave all other data intact
+        last_open_tag = None
+        tokens        = re.split('(</?[a-z0-9_]+>)', ofx_string, flags=re.I)
+        new_fh        = StringIO.StringIO()
+        for idx,token in enumerate(tokens):
+            is_closing_tag = token.startswith('</')
+            is_processing_tag = token.startswith('<?')
+            is_cdata = token.startswith('<!')
+            is_tag = token.startswith('<') and not is_cdata
+            is_open_tag = is_tag and not is_closing_tag and not is_processing_tag
+            if is_tag:
+                if last_open_tag is not None:
+                    new_fh.write("</%s>" % last_open_tag)
+                    last_open_tag = None
+            if is_open_tag:
+                tag_name = re.findall(r'<([a-z0-9_]+)>', token, flags=re.I)[0]
+                if tag_name.upper() not in closing_tags:
+                    last_open_tag = tag_name
+            new_fh.write(token)
+        new_fh.seek(0)
+        self.fh = new_fh
 
 
 class Ofx(object):
@@ -193,7 +230,7 @@ class OfxParser(object):
         ofx_obj = Ofx()
 
         # Store the headers
-        ofx_file = OfxFile(file_handle)
+        ofx_file = OfxPreprocessedFile(file_handle)
         ofx_obj.headers = ofx_file.headers
         ofx_obj.accounts = []
 
