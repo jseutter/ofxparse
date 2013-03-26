@@ -106,6 +106,15 @@ class Security:
         self.ticker = ticker
         self.memo = memo
 
+class Signon:
+    def __init__(self, code, severity, message):
+        self.code = code
+        self.severity = severity
+        self.message = message
+        if int(code) == 0:
+            self.success = True
+        else:
+            self.success = False
 
 class Statement(object):
     def __init__(self):
@@ -200,6 +209,10 @@ class OfxParser(object):
         ofx = BeautifulStoneSoup(ofx_file.fh)
         if len(ofx.contents) == 0:
             raise OfxParserException('The ofx file is empty!')
+
+        sonrs_ofx = ofx.find('sonrs')
+        if sonrs_ofx:
+            ofx_obj.signon = cls_.parseSonrs(sonrs_ofx)
 
         stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
@@ -465,6 +478,18 @@ class OfxParser(object):
             institution.fid = fid.contents[0].strip()
 
         return institution
+
+    @classmethod
+    def parseSonrs(cls_, sonrs):
+
+        code     = int(sonrs.find('code').contents[0].strip())
+        severity = sonrs.find('severity').contents[0].strip()
+        try:
+            message = sonrs.find('message').contents[0].strip()
+        except:
+            message = ''
+
+        return Signon(code,severity,message)
 
     @classmethod
     def parseStmtrs(cls_, stmtrs_list, accountType):
