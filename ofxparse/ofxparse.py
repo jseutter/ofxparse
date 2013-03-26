@@ -1,8 +1,9 @@
 from BeautifulSoup import BeautifulStoneSoup
-import decimal, datetime
+import decimal
+import datetime
 import codecs
+import mcc
 import re
-
 
 class OfxFile(object):
     def __init__(self, fh):
@@ -12,19 +13,19 @@ class OfxFile(object):
 
     def read_headers(self):
         if not hasattr(self.fh, "seek") or not hasattr(self.fh, "next"):
-            return # fh is not a file object, we're doomed.
+            return  # fh is not a file object, we're doomed.
 
         orig_pos = self.fh.tell()
         self.fh.seek(0)
-        
-        head_data = self.fh.read(1024*10)
+
+        head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find('<')]
-        
+
         for line in re.split('\r?\n?', head_data):
             # Newline?
             if line.strip() == "":
                 break
-            
+
             header, value = line.split(":")
             header, value = header.strip().upper(), value.strip()
 
@@ -32,19 +33,19 @@ class OfxFile(object):
                 value = None
 
             self.headers[header] = value
-            
+
         # Look for the encoding
         enc_type = self.headers.get("ENCODING")
         if enc_type:
-            encoding = None # Unknown
+            encoding = None  # Unknown
 
             if enc_type == "USASCII":
                 cp = self.headers.get("CHARSET", "1252")
                 encoding = "cp%s" % (cp, )
 
-            elif enc_type == "UNICODE":
+            elif enc_type in ("UNICODE", "UTF-8"):
                 encoding = "utf-8"
-            
+
             try:
                 codec = codecs.lookup(encoding)
             except LookupError:
@@ -55,27 +56,30 @@ class OfxFile(object):
 
                 # Decode the headers
                 uheaders = {}
-                for key,value in self.headers.iteritems():
+                for key, value in self.headers.iteritems():
                     key = key.decode(encoding)
 
                     if type(value) is str:
                         value = value.decode(encoding)
-                    
+
                     uheaders[key] = value
                 self.headers = uheaders
         # Reset the fh to the original position
         self.fh.seek(orig_pos)
 
+
 class Ofx(object):
     pass
+
 
 class AccountType(object):
     (Unknown, Bank, CreditCard, Investment) = range(0, 4)
 
+
 class Account(object):
     def __init__(self):
         self.statement = None
-        self.number = ''
+        self.account_id = ''
         self.routing_number = ''
         self.account_type = ''
         self.institution = None
@@ -83,10 +87,17 @@ class Account(object):
         # Used for error tracking
         self.warnings = []
 
+    @property
+    def number(self):
+        # For backwards compatibility.  Remove in version 1.0.
+        return self.account_id
+
+
 class InvestmentAccount(Account):
     def __init__(self):
         super(InvestmentAccount, self).__init__()
         self.brokerid = ''
+
 
 class Security:
     def __init__(self, uniqueid, name, ticker, memo):
@@ -94,6 +105,7 @@ class Security:
         self.name = name
         self.ticker = ticker
         self.memo = memo
+
 
 class Statement(object):
     def __init__(self):
@@ -105,6 +117,7 @@ class Statement(object):
         self.discarded_entries = []
         self.warnings = []
 
+
 class InvestmentStatement(object):
     def __init__(self):
         self.positions = []
@@ -112,6 +125,7 @@ class InvestmentStatement(object):
         # Error tracking:
         self.discarded_entries = []
         self.warnings = []
+
 
 class Transaction(object):
     def __init__(self):
@@ -121,9 +135,12 @@ class Transaction(object):
         self.amount = None
         self.id = ''
         self.memo = ''
-    
+        self.sic = None
+        self.mcc = ''
+
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
+
 
 class InvestmentTransaction(object):
     def __init__(self):
@@ -132,9 +149,10 @@ class InvestmentTransaction(object):
         self.security = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
-    
+
     def __repr__(self):
         return "<InvestmentTransaction units=" + str(self.units) + ">"
+
 
 class Position(object):
     def __init__(self):
@@ -142,12 +160,16 @@ class Position(object):
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
 
+
 class Institution(object):
     def __init__(self):
         self.organization = ''
+        self.fid = ''
+
 
 class OfxParserException(Exception):
     pass
+
 
 class OfxParser(object):
     @classmethod
@@ -155,16 +177,16 @@ class OfxParser(object):
         '''
         parse is the main entry point for an OfxParser. It takes a file
         handle and an optional log_errors flag.
-        
+
         If fail_fast is True, the parser will fail on any errors.
         If fail_fast is False, the parser will log poor statements in the
         statement class and continue to run. Note: the library does not
         guarantee that no exceptions will be raised to the caller, only
         that statements will include bad transactions (which are marked).
-        
+
         '''
         cls_.fail_fast = fail_fast
-        
+
         if isinstance(file_handle, type('')):
             raise RuntimeError(u"parse() takes in a file handle, not a string")
 
@@ -173,47 +195,51 @@ class OfxParser(object):
         # Store the headers
         ofx_file = OfxFile(file_handle)
         ofx_obj.headers = ofx_file.headers
+        ofx_obj.accounts = []
 
         ofx = BeautifulStoneSoup(ofx_file.fh)
         if len(ofx.contents) == 0:
             raise OfxParserException('The ofx file is empty!')
-            
-        stmtrs_ofx = ofx.find('stmtrs')
+
+        stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
-            return ofx_obj
-        ccstmtrs_ofx = ofx.find('ccstmtrs')
+            ofx_obj.accounts += cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
+
+        ccstmtrs_ofx = ofx.findAll('ccstmtrs')
         if ccstmtrs_ofx:
-            ofx_obj.account = cls_.parseStmtrs(
+            ofx_obj.accounts += cls_.parseStmtrs(
                 ccstmtrs_ofx, AccountType.CreditCard)
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                ofx_obj.account.institution = cls_.parseOrg(org_ofx)
-            return ofx_obj
-        invstmtrs_ofx = ofx.find('invstmtrs')
+
+        invstmtrs_ofx = ofx.findAll('invstmtrs')
         if invstmtrs_ofx:
-            ofx_obj.account = cls_.parseInvstmtrs(invstmtrs_ofx)
+            ofx_obj.accounts += cls_.parseInvstmtrs(invstmtrs_ofx)
             seclist_ofx = ofx.find('seclist')
             if seclist_ofx:
                 ofx_obj.security_list = cls_.parseSeclist(seclist_ofx)
             else:
                 ofx_obj.security_list = None
-            return ofx_obj
+
         acctinfors_ofx = ofx.find('acctinfors')
         if acctinfors_ofx:
-            ofx_obj.accounts = cls_.parseAcctinfors(acctinfors_ofx,ofx)
+            ofx_obj.accounts += cls_.parseAcctinfors(acctinfors_ofx, ofx)
+
+        fi_ofx = ofx.find('fi')
+        if fi_ofx:
+            for account in ofx_obj.accounts:
+                account.institution = cls_.parseOrg(fi_ofx)
+
+        if ofx_obj.accounts:
+            ofx_obj.account = ofx_obj.accounts[0]
+
         return ofx_obj
-    
+
     @classmethod
     def parseOfxDateTime(cls_, ofxDateTime):
         # dateAsString looks something like 20101106160000.00[-5:EST]
         # for 6 Nov 2010 4pm UTC-5 aka EST
-        
+
         # Some places (e.g. Newfoundland) have non-integer offsets.
-        res = re.search("\[(?P<tz>-?\d+\.?\d*)\:\w*\]$", ofxDateTime)
+        res = re.search("\[(?P<tz>[-+]?\d+\.?\d*)\:\w*\]$", ofxDateTime)
         if res:
             tz = float(res.group('tz'))
         else:
@@ -232,55 +258,62 @@ class OfxParser(object):
 
     @classmethod
     def parseAcctinfors(cls_, acctinfors_ofx, ofx):
-        accounts = []
+        all_accounts = []
         for i in acctinfors_ofx.findAll('acctinfo'):
-            account = None
+            accounts = []
             if i.find('invacctinfo'):
-                account = cls_.parseInvstmtrs(i)
+                accounts += cls_.parseInvstmtrs([i])
             elif i.find('ccacctinfo'):
-                account = cls_.parseStmtrs( i, AccountType.CreditCard)
+                accounts += cls_.parseStmtrs([i], AccountType.CreditCard)
             elif i.find('bankacctinfo'):
-                account = cls_.parseStmtrs( i, AccountType.Bank)
+                accounts += cls_.parseStmtrs([i], AccountType.Bank)
             else:
                 continue
 
-            org_ofx = ofx.find('org')
-            if org_ofx:
-                account.institution = cls_.parseOrg(org_ofx)
+	        fi_ofx = ofx.find('fi')
+	        if fi_ofx:
+	            for account in ofx_obj.accounts:
+	                account.institution = cls_.parseOrg(fi_ofx)
             desc = i.find('desc')
-            if hasattr(desc,'contents'):
-                account.desc = desc.contents[0].strip()
-            accounts.append(account)
-        return accounts
+            if hasattr(desc, 'contents'):
+                for account in accounts:
+                    account.desc = desc.contents[0].strip()
+            all_accounts += accounts
+        return all_accounts
 
     @classmethod
-    def parseInvstmtrs(cls_, invstmtrs_ofx):
-        account = InvestmentAccount()
-        acctid_tag = invstmtrs_ofx.find('acctid')
-        if (hasattr(acctid_tag, 'contents')):
-            try:
-                account.number = acctid_tag.contents[0].strip()
-            except IndexError:
-                account.warnings.append(u"Empty acctid tag for %s" % invstmtrs_ofx)
-                if cls_.fail_fast:
-                    raise
-                    
-        brokerid_tag = invstmtrs_ofx.find('brokerid')
-        if (hasattr(brokerid_tag, 'contents')):
-            try:
-                account.brokerid = brokerid_tag.contents[0].strip()
-            except IndexError:
-                account.warnings.append(u"Empty brokerid tag for %s" % invstmtrs_ofx)
-                if cls_.fail_fast:
-                    raise
-                    
-        account.type = AccountType.Investment
-        
-        if (invstmtrs_ofx):
-            account.statement = cls_.parseInvestmentStatement(invstmtrs_ofx)
-        
-        return account
-    
+    def parseInvstmtrs(cls_, invstmtrs_list):
+        ret = []
+        for invstmtrs_ofx in invstmtrs_list:
+            account = InvestmentAccount()
+            acctid_tag = invstmtrs_ofx.find('acctid')
+            if (hasattr(acctid_tag, 'contents')):
+                try:
+                    account.account_id = acctid_tag.contents[0].strip()
+                except IndexError:
+                    account.warnings.append(
+                        u"Empty acctid tag for %s" % invstmtrs_ofx)
+                    if cls_.fail_fast:
+                        raise
+
+            brokerid_tag = invstmtrs_ofx.find('brokerid')
+            if (hasattr(brokerid_tag, 'contents')):
+                try:
+                    account.brokerid = brokerid_tag.contents[0].strip()
+                except IndexError:
+                    account.warnings.append(
+                        u"Empty brokerid tag for %s" % invstmtrs_ofx)
+                    if cls_.fail_fast:
+                        raise
+
+            account.type = AccountType.Investment
+
+            if (invstmtrs_ofx):
+                account.statement = cls_.parseInvestmentStatement(
+                    invstmtrs_ofx)
+            ret.append(account)
+        return ret
+
     @classmethod
     def parseSeclist(cls_, seclist_ofx):
         securityList = []
@@ -289,12 +322,17 @@ class OfxParser(object):
             name_tag = secinfo_ofx.find('secname')
             ticker_tag = secinfo_ofx.find('ticker')
             memo_tag = secinfo_ofx.find('memo')
-            if uniqueid_tag and name_tag and ticker_tag and memo_tag:
+            if uniqueid_tag and name_tag and ticker_tag:
+                try:
+                    memo = memo_tag.contents[0].strip()
+                except AttributeError:
+                    # memo can be empty
+                    memo = None
                 securityList.append(
                     Security(uniqueid_tag.contents[0].strip(),
                              name_tag.contents[0].strip(),
                              ticker_tag.contents[0].strip(),
-                             memo_tag.contents[0].strip()))
+                             memo))
         return securityList
 
     @classmethod
@@ -329,13 +367,15 @@ class OfxParser(object):
         tag = ofx.find('dttrade')
         if (hasattr(tag, 'contents')):
             try:
-                transaction.tradeDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+                transaction.tradeDate = cls_.parseOfxDateTime(
+                    tag.contents[0].strip())
             except ValueError:
                 raise
         tag = ofx.find('dtsettle')
         if (hasattr(tag, 'contents')):
             try:
-                transaction.settleDate = cls_.parseOfxDateTime(tag.contents[0].strip())
+                transaction.settleDate = cls_.parseOfxDateTime(
+                    tag.contents[0].strip())
             except ValueError:
                 raise
         tag = ofx.find('uniqueid')
@@ -356,7 +396,7 @@ class OfxParser(object):
         if hasattr(currency_tag, "contents"):
             statement.currency = currency_tag.contents[0].strip().lower()
         invtranlist_ofx = invstmtrs_ofx.find('invtranlist')
-        if (invtranlist_ofx != None):
+        if (invtranlist_ofx is not None):
             tag = invtranlist_ofx.find('dtstart')
             if (hasattr(tag, 'contents')):
                 try:
@@ -370,32 +410,35 @@ class OfxParser(object):
                     statement.warnings.append(u'Invalid start date: %s' % e)
                     if cls_.fail_fast:
                         raise
-                    
+
             tag = invtranlist_ofx.find('dtend')
             if (hasattr(tag, 'contents')):
                 try:
-                    statement.end_date = cls_.parseOfxDateTime(tag.contents[0].strip())
+                    statement.end_date = cls_.parseOfxDateTime(
+                        tag.contents[0].strip())
                 except IndexError:
                     statement.warnings.append(u'Empty end date.')
                 except ValueError, e:
                     statement.warnings.append(u'Invalid end date: %s' % e)
                     if cls_.fail_fast:
                         raise
-        
-        try:
-            for investment_ofx in invstmtrs_ofx.findAll('posmf'):
-                statement.positions.append(
-                    cls_.parseInvestmentPosition(investment_ofx))
-        except (ValueError, IndexError, decimal.InvalidOperation, TypeError), e:
-            if cls_.fail_fast:
-                raise
-            statement.discarded_entries.append(
-                { u'error': u"Error parsing positions: " + str(e),
-                 u'content': investment_ofx }
-            )
-        
-        
-        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock']:
+
+        for transaction_type in ['posmf', 'posstock']:
+            try:
+                for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
+                    statement.positions.append(
+                        cls_.parseInvestmentPosition(investment_ofx))
+            except (ValueError, IndexError, decimal.InvalidOperation,
+                    TypeError), e:
+                if cls_.fail_fast:
+                    raise
+                statement.discarded_entries.append(
+                    {u'error': u"Error parsing positions: " + str(e),
+                     u'content': investment_ofx}
+                )
+
+        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
+                                 'sellstock']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
@@ -404,38 +447,47 @@ class OfxParser(object):
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
-                    { u'error': transaction_type + ": " + str(e),
-                     u'content': investment_ofx }
+                    {u'error': transaction_type + ": " + str(e),
+                     u'content': investment_ofx}
                 )
-        
+
         return statement
-    
+
     @classmethod
-    def parseOrg(cls_, org_ofx):
+    def parseOrg(cls_, fi_ofx):
         institution = Institution()
-        if hasattr(org_ofx, 'contents'):
-            institution.organization = org_ofx.contents[0].strip()
+        org = fi_ofx.find('org')
+        if hasattr(org, 'contents'):
+            institution.organization = org.contents[0].strip()
+
+        fid = fi_ofx.find('fid')
+        if hasattr(fid, 'contents'):
+            institution.fid = fid.contents[0].strip()
+
         return institution
 
     @classmethod
-    def parseStmtrs(cls_, stmtrs_ofx, accountType):
-        ''' Parse the <STMTRS> tag and return an Account object. '''
-        account = Account()
-        acctid_tag = stmtrs_ofx.find('acctid')
-        if hasattr(acctid_tag, 'contents'):
-            account.number = acctid_tag.contents[0].strip()
-        bankid_tag = stmtrs_ofx.find('bankid')
-        if hasattr(bankid_tag, 'contents'):
-            account.routing_number = bankid_tag.contents[0].strip()
-        type_tag = stmtrs_ofx.find('accttype')
-        if hasattr(type_tag, 'contents'):
-            account.account_type = type_tag.contents[0].strip()
-        account.type = accountType
+    def parseStmtrs(cls_, stmtrs_list, accountType):
+        ''' Parse the <STMTRS> tags and return a list of Accounts object. '''
+        ret = []
+        for stmtrs_ofx in stmtrs_list:
+            account = Account()
+            acctid_tag = stmtrs_ofx.find('acctid')
+            if hasattr(acctid_tag, 'contents'):
+                account.account_id = acctid_tag.contents[0].strip()
+            bankid_tag = stmtrs_ofx.find('bankid')
+            if hasattr(bankid_tag, 'contents'):
+                account.routing_number = bankid_tag.contents[0].strip()
+            type_tag = stmtrs_ofx.find('accttype')
+            if hasattr(type_tag, 'contents'):
+                account.account_type = type_tag.contents[0].strip()
+            account.type = accountType
 
-        if stmtrs_ofx:
-            account.statement = cls_.parseStatement(stmtrs_ofx)
-        return account
-    
+            if stmtrs_ofx:
+                account.statement = cls_.parseStatement(stmtrs_ofx)
+            ret.append(account)
+        return ret
+
     @classmethod
     def parseStatement(cls_, stmt_ofx):
         '''
@@ -448,29 +500,35 @@ class OfxParser(object):
                 statement.start_date = cls_.parseOfxDateTime(
                     dtstart_tag.contents[0].strip())
             except IndexError:
-                statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
-                    raise                
+                    raise
             except ValueError:
-                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
-                    raise                
-                
+                    raise
+
         dtend_tag = stmt_ofx.find('dtend')
         if hasattr(dtend_tag, "contents"):
             try:
                 statement.end_date = cls_.parseOfxDateTime(
                     dtend_tag.contents[0].strip())
             except IndexError:
-                statement.warnings.append(u"Statement start date was empty for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except ValueError, ve:
-                statement.warnings.append(u"Statement start date was not formatted correctly for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not formatted correctly for"
+                    u" %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except TypeError:
-                statement.warnings.append(u"Statement start date was not allowed for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Statement start date was not allowed for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -479,10 +537,11 @@ class OfxParser(object):
             try:
                 statement.currency = currency_tag.contents[0].strip().lower()
             except IndexError:
-                statement.warnings.append(u"Currency definition was empty for %s" % stmt_ofx)
+                statement.warnings.append(
+                    u"Currency definition was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
-                
+
         ledger_bal_tag = stmt_ofx.find('ledgerbal')
         if hasattr(ledger_bal_tag, "contents"):
             balamt_tag = ledger_bal_tag.find('balamt')
@@ -490,11 +549,12 @@ class OfxParser(object):
                 try:
                     statement.balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except IndexError:
-                    statement.warnings.append(u"Ledger balance amount was empty for %s" % stmt_ofx)
+                except (IndexError, decimal.InvalidOperation), ex:
+                    statement.warnings.append(
+                        u"Ledger balance amount was empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
-                        raise
-                    
+                        raise OfxParserException("Empty ledger balance")
+
         avail_bal_tag = stmt_ofx.find('availbal')
         if hasattr(avail_bal_tag, "contents"):
             balamt_tag = avail_bal_tag.find('balamt')
@@ -502,16 +562,19 @@ class OfxParser(object):
                 try:
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except IndexError:
-                    statement.warnings.append(u"Available balance amount was empty for %s" % stmt_ofx)
+                except (IndexError, decimal.InvalidOperation), ex:
+                    statement.warnings.append(u"Available balance amount was"
+                                              u" empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
-                        raise
-                    
+                        raise OfxParserException("Empty available balance")
+
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
-                statement.transactions.append(cls_.parseTransaction(transaction_ofx))
+                statement.transactions.append(
+                    cls_.parseTransaction(transaction_ofx))
             except OfxParserException, ofxError:
-                statement.discarded_entries.append({ 'error': str(ofxError), 'content': transaction_ofx })
+                statement.discarded_entries.append(
+                    {'error': str(ofxError), 'content': transaction_ofx})
                 if cls_.fail_fast:
                     raise
 
@@ -531,7 +594,8 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(u"Empty transaction type")
             except TypeError:
-                raise OfxParserException(u"No Transaction type (a required field)")
+                raise OfxParserException(
+                    u"No Transaction type (a required field)")
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
@@ -540,8 +604,9 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(u"Empty transaction name")
             except TypeError:
-                raise OfxParserException(u"No Transaction name (a required field)")
-                
+                raise OfxParserException(
+                    u"No Transaction name (a required field)")
+
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
             try:
@@ -555,30 +620,36 @@ class OfxParser(object):
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
             try:
-                transaction.amount = decimal.Decimal(amt_tag.contents[0].strip())
+                transaction.amount = decimal.Decimal(
+                    amt_tag.contents[0].strip())
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
-                raise OfxParserException(u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
+                raise OfxParserException(
+                    u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
             except TypeError:
-                raise OfxParserException(u"No Transaction Amount (a required field)")
+                raise OfxParserException(
+                    u"No Transaction Amount (a required field)")
         else:
-            raise OfxParserException(u"Missing Transaction Amount (a required field)")
+            raise OfxParserException(
+                u"Missing Transaction Amount (a required field)")
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
             try:
                 transaction.date = cls_.parseOfxDateTime(
                     date_tag.contents[0].strip())
-            except IndexError: 
+            except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except ValueError, ve:
                 raise OfxParserException(str(ve))
             except TypeError:
-                raise OfxParserException(u"No Transaction Date (a required field)")
+                raise OfxParserException(
+                    u"No Transaction Date (a required field)")
         else:
-            raise OfxParserException(u"Missing Transaction Date (a required field)")
-        
+            raise OfxParserException(
+                u"Missing Transaction Date (a required field)")
+
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
             try:
@@ -589,6 +660,19 @@ class OfxParser(object):
                 raise OfxParserException(u"No FIT id (a required field)")
         else:
             raise OfxParserException(u"Missing FIT id (a required field)")
-        
-        return transaction
 
+        sic_tag = txn_ofx.find('sic')
+        if hasattr(sic_tag, 'contents'):
+            try:
+				transaction.sic = sic_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty transaction Standard Industry Code (SIC)")
+
+        if transaction.sic is not None:
+            try:
+                transaction.mcc = mcc.codes.get(transaction.sic, '').get('combined description')
+            except IndexError:
+                raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
+
+
+        return transaction
