@@ -1,9 +1,16 @@
-from BeautifulSoup import BeautifulStoneSoup
 import decimal
 import datetime
 import codecs
 import mcc
 import re
+
+def soup_maker(fh):
+    try:
+        from bs4 import BeautifulSoup
+        return BeautifulSoup(fh)
+    except ImportError:
+        from BeautifulSoup import BeautifulStoneSoup
+        return BeautifulStoneSoup(fh)
 
 class OfxFile(object):
     def __init__(self, fh):
@@ -197,7 +204,7 @@ class OfxParser(object):
         ofx_obj.headers = ofx_file.headers
         ofx_obj.accounts = []
 
-        ofx = BeautifulStoneSoup(ofx_file.fh)
+        ofx = soup_maker(ofx_file.fh)
         if len(ofx.contents) == 0:
             raise OfxParserException('The ofx file is empty!')
 
