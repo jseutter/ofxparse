@@ -79,12 +79,12 @@ class OfxPreprocessedFile(OfxFile):
         ofx_string = self.fh.read()
 
         # find all closing tags as hints
-        closing_tags = [ t.upper() for t in re.findall(r'</([a-z0-9_]+)>', ofx_string, flags=re.I) ]
+        closing_tags = [ t.upper() for t in re.findall(r'(?i)</([a-z0-9_\.]+)>', ofx_string) ]
 
         # close all tags that don't have closing tags and
         # leave all other data intact
         last_open_tag = None
-        tokens        = re.split('(</?[a-z0-9_]+>)', ofx_string, flags=re.I)
+        tokens        = re.split(r'(?i)(</?[a-z0-9_\.]+>)', ofx_string)
         new_fh        = StringIO.StringIO()
         for idx,token in enumerate(tokens):
             is_closing_tag = token.startswith('</')
@@ -97,7 +97,7 @@ class OfxPreprocessedFile(OfxFile):
                     new_fh.write("</%s>" % last_open_tag)
                     last_open_tag = None
             if is_open_tag:
-                tag_name = re.findall(r'<([a-z0-9_]+)>', token, flags=re.I)[0]
+                tag_name = re.findall(r'(?i)<([a-z0-9_\.]+)>', token)[0]
                 if tag_name.upper() not in closing_tags:
                     last_open_tag = tag_name
             new_fh.write(token)
