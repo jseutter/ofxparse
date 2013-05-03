@@ -465,6 +465,28 @@ class TestGracefulFailures(TestCase):
         self.assertRaises(OfxParserException, OfxParser.parse,
                           open_file('fail_nice/empty_balance.ofx'))
 
+class TestParseSonrs(TestCase):
+
+    def testSuccess(self):
+        ofx = OfxParser.parse(open_file('signon_success.ofx'), True)
+        self.assertTrue(ofx.signon.success)
+        self.assertEquals(ofx.signon.code, 0)
+        self.assertEquals(ofx.signon.severity, 'INFO')
+        self.assertEquals(ofx.signon.message, 'Login successful')
+
+        ofx = OfxParser.parse(open_file('signon_success_no_message.ofx'), True)
+        self.assertTrue(ofx.signon.success)
+        self.assertEquals(ofx.signon.code, 0)
+        self.assertEquals(ofx.signon.severity, 'INFO')
+        self.assertEquals(ofx.signon.message, '')
+
+    def testFailure(self):
+        ofx = OfxParser.parse(open_file('signon_fail.ofx'), True)
+        self.assertFalse(ofx.signon.success)
+        self.assertEquals(ofx.signon.code, 15500)
+        self.assertEquals(ofx.signon.severity, 'ERROR')
+        self.assertEquals(ofx.signon.message, 'Your request could not be processed because you supplied an invalid identification code or your password was incorrect')
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
