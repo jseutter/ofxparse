@@ -1,4 +1,4 @@
-from BeautifulSoup import BeautifulStoneSoup
+from ofxparse.ofxparse import soup_maker
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest import TestCase
@@ -202,7 +202,7 @@ class TestParseStmtrs(TestCase):
     '''
 
     def testThatParseStmtrsReturnsAnAccount(self):
-        stmtrs = BeautifulStoneSoup(self.input)
+        stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
             stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertEquals('12300 000012345678', account.number)
@@ -210,7 +210,7 @@ class TestParseStmtrs(TestCase):
         self.assertEquals('CHECKING', account.account_type)
 
     def testThatReturnedAccountAlsoHasAStatement(self):
-        stmtrs = BeautifulStoneSoup(self.input)
+        stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
             stmtrs.find('stmtrs'), AccountType.Bank)[0]
         self.assertTrue(hasattr(account, 'statement'))
@@ -265,7 +265,7 @@ class TestParseStatement(TestCase):
  </STMTRS>
 </STMTTRNRS>
         '''
-        txn = BeautifulStoneSoup(input)
+        txn = soup_maker(input)
         statement = OfxParser.parseStatement(txn.find('stmttrnrs'))
         self.assertEquals(datetime(2009, 4, 1), statement.start_date)
         self.assertEquals(
@@ -295,7 +295,7 @@ class TestParseTransaction(TestCase):
  <MEMO>POS MERCHANDISE;MCDONALD'S #112
 </STMTTRN>
 '''
-        txn = BeautifulStoneSoup(input)
+        txn = soup_maker(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('pos', transaction.type)
         self.assertEquals(datetime(

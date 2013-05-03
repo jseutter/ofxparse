@@ -7,6 +7,17 @@ import re
 VERSION = re.search(r"__version__ = '(.*?)'",
                     open("ofxparse/__init__.py").read()).group(1)
 
+import platform
+python_v = platform.python_version_tuple()
+if int(python_v[0]) == 2 and int(python_v[1]) < 6:
+    # python 2.5 (and presumably 2.4) does not like beautiful soup 4
+    REQUIRES = [
+        "beautifulSoup>=3.0",
+    ]
+else:
+    REQUIRES = [
+        "beautifulsoup4"
+    ]
 
 setup(name='ofxparse',
       version=VERSION,
@@ -32,10 +43,7 @@ setup(name='ofxparse',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=True,
-      install_requires=[
-          # -*- Extra requirements: -*-
-          "BeautifulSoup>=3.0",
-      ],
+      install_requires=REQUIRES,
       entry_points="""
       """,
       use_2to3=True,
