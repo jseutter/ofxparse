@@ -8,7 +8,118 @@ sys.path.append('..')
 
 from support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile, OfxParserException
+from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException
+
+class TestOfxPreprocessedFile(TestCase):
+
+    def testPreprocess(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE><VAL.UE>a<VAL_UE>b<TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net<DTASOF>2222</BAL><BAL><NAME>Gross<DTASOF>3333</BAL></BALLIST></INVBAL></OFX>
+""")
+        expect = """OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE></DTASOF><VAL.UE>a</VAL.UE><VAL_UE>b</VAL_UE><TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net</NAME><DTASOF>2222</DTASOF></BAL><BAL><NAME>Gross</NAME><DTASOF>3333</DTASOF></BAL></BALLIST></INVBAL></OFX>
+"""
+        ofx_file = OfxPreprocessedFile(fh)
+        data     = ofx_file.fh.read()
+        self.assertEqual(data,expect)
+
+    def testHeaders(self):
+        expect = {"OFXHEADER": u"100",
+                  "DATA": u"OFXSGML",
+                  "VERSION": u"102",
+                  "SECURITY": None,
+                  "ENCODING": u"USASCII",
+                  "CHARSET": u"1252",
+                  "COMPRESSION": None,
+                  "OLDFILEUID": None,
+                  "NEWFILEUID": None,
+                  }
+        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
+        self.assertEquals(expect, ofx.headers)
+
+    def testUTF8(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+""")
+        ofx_file = OfxPreprocessedFile(fh)
+        headers = ofx_file.headers
+        data = ofx_file.fh.read()
+
+        self.assertTrue(type(data) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
+
+    def testCP1252(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET: 1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+""")
+        ofx_file = OfxPreprocessedFile(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+
+        self.assertTrue(type(result) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
+
+    def testUTF8Japanese(self):
+        fh = StringIO("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UTF-8
+CHARSET:CSUNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+""")
+        ofx_file = OfxPreprocessedFile(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+
+        self.assertTrue(type(result) is unicode)
+        for key, value in headers.iteritems():
+            self.assertTrue(type(key) is unicode)
+            self.assertTrue(type(value) is not str)
+
+    def testBrokenLineEndings(self):
+        fh = StringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        ofx_file = OfxPreprocessedFile(fh)
+        self.assertEquals(len(ofx_file.headers.keys()), 2)
+
 
 
 class TestOfxFile(TestCase):
