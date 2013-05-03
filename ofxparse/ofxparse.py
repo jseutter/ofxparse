@@ -197,7 +197,12 @@ class Transaction(object):
 
 
 class InvestmentTransaction(object):
-    def __init__(self):
+    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock) = [x for x in range(-1, 5)]
+    def __init__(self, type):
+        try:
+            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock'].index(type.lower())
+        except ValueError as e:
+            self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
         self.settleDate = None
         self.security = ''
@@ -205,7 +210,7 @@ class InvestmentTransaction(object):
         self.unit_price = decimal.Decimal(0)
 
     def __repr__(self):
-        return "<InvestmentTransaction units=" + str(self.units) + ">"
+        return "<InvestmentTransaction type=" + str(self.type) + ", units=" + str(self.units) + ">"
 
 
 class Position(object):
@@ -416,7 +421,7 @@ class OfxParser(object):
 
     @classmethod
     def parseInvestmentTransaction(cls_, ofx):
-        transaction = InvestmentTransaction()
+        transaction = InvestmentTransaction(ofx.name)
         tag = ofx.find('fitid')
         if (hasattr(tag, 'contents')):
             transaction.id = tag.contents[0].strip()
