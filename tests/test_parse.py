@@ -226,6 +226,7 @@ class TestParse(TestCase):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
         self.assertEquals('12300 000012345678', ofx.account.number)
         self.assertEquals('160000100', ofx.account.routing_number)
+        self.assertEquals('00', ofx.account.branch_id)
         self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
         # Todo: support values in decimal or int form.

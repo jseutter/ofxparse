@@ -126,6 +126,7 @@ class Account(object):
         self.statement = None
         self.account_id = ''
         self.routing_number = ''
+        self.branch_id = ''
         self.account_type = ''
         self.institution = None
         self.type = AccountType.Unknown
@@ -554,6 +555,9 @@ class OfxParser(object):
             bankid_tag = stmtrs_ofx.find('bankid')
             if hasattr(bankid_tag, 'contents'):
                 account.routing_number = bankid_tag.contents[0].strip()
+            branchid_tag = stmtrs_ofx.find('branchid')
+            if hasattr(branchid_tag, 'contents'):
+                account.branch_id = branchid_tag.contents[0].strip()
             type_tag = stmtrs_ofx.find('accttype')
             if hasattr(type_tag, 'contents'):
                 account.account_type = type_tag.contents[0].strip()
