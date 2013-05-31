@@ -4,6 +4,7 @@ import codecs
 import mcc
 import re
 import StringIO
+import collections
 
 def soup_maker(fh):
     try:
@@ -16,7 +17,7 @@ def soup_maker(fh):
 
 class OfxFile(object):
     def __init__(self, fh):
-        self.headers = {}
+        self.headers = collections.OrderedDict()
         self.fh = fh
         self.read_headers()
 
@@ -64,7 +65,7 @@ class OfxFile(object):
                 self.fh = codec.streamreader(self.fh)
 
                 # Decode the headers
-                uheaders = {}
+                uheaders = collections.OrderedDict()
                 for key, value in self.headers.iteritems():
                     key = key.decode(encoding)
 
@@ -114,7 +115,12 @@ class OfxPreprocessedFile(OfxFile):
 
 
 class Ofx(object):
-    pass
+    def __str__(self):
+        return ""
+#        headers = "\r\n".join(":".join(el if el else "NONE" for el in item) for item in self.headers.iteritems())
+#        headers += "\r\n\r\n"
+#
+#        return headers + str(self.signon)
 
 
 class AccountType(object):
@@ -161,6 +167,15 @@ class Signon:
             self.success = True
         else:
             self.success = False
+
+    def __str__(self):
+        ret = "\t<SIGNONMSGSRSV1>\r\n" + "\t\t<SONRS>\r\n" + "\t\t\t<STATUS>\r\n"
+        ret += "\t\t\t\t<CODE>%s\r\n" % self.code
+        ret += "\t\t\t\t<SEVERITY>%s\r\n" % self.severity
+        if self.message:
+            ret += "\t\t\t\t<MESSAGE>%s\r\n" % self.message
+        ret += "\t\t\t</STATUS>\r\n" + "\t\t</SONRS>\r\n" + "\t</SIGNONMSGSRSV1>\r\n"
+        return ret
 
 class Statement(object):
     def __init__(self):
