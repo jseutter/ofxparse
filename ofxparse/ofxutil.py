@@ -215,8 +215,8 @@ if __name__ == "__main__":
 #    with open('out.ofx', 'wb') as f:
 #        f.write(str(ofx))
 
-#    for file_name in os.listdir('fixtures/'):
-#        if os.path.isfile('../tests/fixtures/' + file_name):
+#    for file_name in os.listdir(fixtures):
+#        if os.path.isfile(fixtures + file_name):
 #            print "Attempting to parse", file_name
 #            ofx = OfxParser('fixtures/' + file_name)
 #
