@@ -33,10 +33,7 @@ class OfxData(object):
             self.__dict__[name] = value
         else:
             self.del_tag(name)
-            if isinstance(value, basestring):
-                tag = self.add_tag(name)
-                tag.data = value
-            elif isinstance(value, list):
+            if isinstance(value, list):
                 for val in value:
                     tag = self.add_tag(name)
                     tag.nodes = val.nodes
@@ -46,7 +43,8 @@ class OfxData(object):
                 tag.nodes = value.nodes
                 tag.data = value.data
             else:
-                raise Exception('Unexpected assignment type')
+                tag = self.add_tag(name)
+                tag.data = str(value)
 
     def __getattr__(self, name):
         if name in self.__dict__:
