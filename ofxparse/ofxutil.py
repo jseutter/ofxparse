@@ -1,4 +1,5 @@
 import os
+import copy
 import collections
 import xml.etree.ElementTree as ET
 
@@ -30,13 +31,22 @@ class OfxData(object):
     def __setattr__(self, name, value):
         if name in self.__dict__ or name in ['nodes', 'tag', 'data', 'headers', 'xml']:
             self.__dict__[name] = value
-        elif name in self.__dict__['nodes']:
-            if isinstance(value, OfxData):
-                value.tag = self.__dict__['nodes'][name].tag
-            self.__dict__['nodes'][name] = value
         else:
-            tag = self.add_tag(name)
-            tag.data = value
+            self.del_tag(name)
+            if isinstance(value, basestring):
+                tag = self.add_tag(name)
+                tag.data = value
+            elif isinstance(value, list):
+                for val in value:
+                    tag = self.add_tag(name)
+                    tag.nodes = val.nodes
+                    tag.data = val.data
+            elif isinstance(value, OfxData):
+                tag = self.add_tag(name)
+                tag.nodes = value.nodes
+                tag.data = value.data
+            else:
+                raise Exception('Unexpected assignment type')
 
     def __getattr__(self, name):
         if name in self.__dict__:
@@ -44,7 +54,8 @@ class OfxData(object):
         elif name in self.__dict__['nodes']:
             return self.__dict__['nodes'][name]
         else:
-            raise AttributeError
+            tag = self.add_tag(name)
+            return tag
 
     def __delattr__(self, name):
         if name in self.__dict__:
@@ -127,6 +138,17 @@ class OfxUtil(OfxData):
             pass
         except:
             raise
+        finally:
+            if "OFXHEADER" not in self.headers:
+                self.headers["OFXHEADER"] = "100"
+            if "VERSION" not in self.headers:
+                self.headers["VERSION"] = "102"
+            if "SECURITY" not in self.headers:
+                self.headers["SECURITY"] = "NONE"
+            if "OLDFILEUID" not in self.headers:
+                self.headers["OLDFILEUID"] = "NONE"
+            if "NEWFILEUID" not in self.headers:
+                self.headers["NEWFILEUID"] = "NONE"
 
         try:
             tags = ofx.split("<")
@@ -175,6 +197,10 @@ class OfxUtil(OfxData):
         super(OfxUtil, self).__init__('OFX')
         self.load_from_xml(self, self.xml)
 
+    def write(self, output_file):
+        with open(output_file, 'wb') as f:
+            f.write(str(self))
+
     def __str__(self):
         ret = os.linesep.join(":".join(line) for line in self.headers.iteritems()) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
@@ -204,16 +230,18 @@ if __name__ == "__main__":
     for transaction in ofx['stmttrn']:
         transaction.name = transaction.memo
         del transaction.memo
-#        transaction.notes = "Acknowledged"
+        transaction.notes = "Acknowledged"
 
 #    for bal in ofx['bal']:
 #        print bal
 
+#    ofx.test = "First assignment operation"
+#    ofx.test = "Second assignment operation"
+#
     print ofx
 
     #Write OFX data to output file
-#    with open('out.ofx', 'wb') as f:
-#        f.write(str(ofx))
+#    ofx.write('out.ofx')
 
 #    for file_name in os.listdir(fixtures):
 #        if os.path.isfile(fixtures + file_name):
