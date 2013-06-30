@@ -350,10 +350,11 @@ class OfxParser(object):
             else:
                 continue
 
-	        fi_ofx = ofx.find('fi')
-	        if fi_ofx:
-	            for account in ofx_obj.accounts:
-	                account.institution = cls_.parseOrg(fi_ofx)
+            fi_ofx = ofx.find('fi')
+            if fi_ofx:
+                for account in ofx_obj.accounts:
+                    account.institution = cls_.parseOrg(fi_ofx)
+
             desc = i.find('desc')
             if hasattr(desc, 'contents'):
                 for account in accounts:
@@ -759,7 +760,7 @@ class OfxParser(object):
         sic_tag = txn_ofx.find('sic')
         if hasattr(sic_tag, 'contents'):
             try:
-				transaction.sic = sic_tag.contents[0].strip()
+                transaction.sic = sic_tag.contents[0].strip()
             except IndexError:
                 raise OfxParserException(u"Empty transaction Standard Industry Code (SIC)")
 
