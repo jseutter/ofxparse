@@ -25,6 +25,11 @@ def soup_maker(fh):
         return BeautifulStoneSoup(fh)
 
 
+def try_decode(string, encoding):
+    if hasattr(string, 'decode'):
+        string = string.decode(encoding)
+    return string
+
 class OfxFile(object):
     def __init__(self, fh):
         self.headers = collections.OrderedDict()
@@ -78,15 +83,10 @@ class OfxFile(object):
                 self.fh = codec.streamreader(self.fh)
 
                 # Decode the headers
-                uheaders = collections.OrderedDict()
-                for key, value in six.iteritems(self.headers):
-                    key = key.decode(encoding)
-
-                    if type(value) is str:
-                        value = value.decode(encoding)
-
-                    uheaders[key] = value
-                self.headers = uheaders
+                self.headers = collections.OrderedDict(
+                    (try_decode(key, encoding), try_decode(value, encoding))
+                    for key, value in six.iteritems(self.headers)
+                )
         # Reset the fh to the original position
         self.fh.seek(orig_pos)
 
