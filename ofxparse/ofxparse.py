@@ -87,8 +87,8 @@ class OfxFile(object):
         # decode the headers using ascii
         ascii_headers = collections27.OrderedDict(
             (
-                key.decode('ascii', errors='replace'),
-                value.decode('ascii', errors='replace'),
+                key.decode('ascii', 'replace'),
+                value.decode('ascii', 'replace'),
             )
             for key, value in six.iteritems(self.headers)
         )
