@@ -6,6 +6,7 @@ import datetime
 import codecs
 import re
 import collections
+import contextlib
 
 try:
     from StringIO import StringIO
@@ -30,6 +31,19 @@ def try_decode(string, encoding):
         string = string.decode(encoding)
     return string
 
+@contextlib.contextmanager
+def save_pos(fh):
+    """
+    Save the position of the file handle, seek to the beginning, and
+    then restore the position.
+    """
+    orig_pos = fh.tell()
+    fh.seek(0)
+    try:
+        yield fh
+    finally:
+        fh.seek(orig_pos)
+
 class OfxFile(object):
     def __init__(self, fh):
         self.headers = collections.OrderedDict()
@@ -41,13 +55,10 @@ class OfxFile(object):
         if not hasattr(self.fh, "seek"):
             return  # fh is not a file object, we're doomed.
 
-        self.read_headers()
+        with save_pos(self.fh):
+            self.read_headers()
 
     def read_headers(self):
-
-        orig_pos = self.fh.tell()
-        self.fh.seek(0)
-
         head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find(six.b('<'))]
 
@@ -89,8 +100,6 @@ class OfxFile(object):
                     (try_decode(key, encoding), try_decode(value, encoding))
                     for key, value in six.iteritems(self.headers)
                 )
-        # Reset the fh to the original position
-        self.fh.seek(orig_pos)
 
 
 class OfxPreprocessedFile(OfxFile):
