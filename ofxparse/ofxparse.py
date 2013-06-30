@@ -61,6 +61,7 @@ class OfxFile(object):
         with save_pos(self.fh):
             self.read_headers()
             self.handle_encoding()
+            self.replace_NONE_headers()
 
     def read_headers(self):
         head_data = self.fh.read(1024 * 10)
@@ -73,9 +74,6 @@ class OfxFile(object):
 
             header, value = line.split(six.b(":"))
             header, value = header.strip().upper(), value.strip()
-
-            if value.upper() == six.b("NONE"):
-                value = None
 
             self.headers[header] = value
 
@@ -103,7 +101,7 @@ class OfxFile(object):
             return
 
         if enc_type == "USASCII":
-            cp = self.headers.get("CHARSET", "1252")
+            cp = ascii_headers.get("CHARSET", "1252")
             encoding = "cp%s" % (cp, )
 
         elif enc_type in ("UNICODE", "UTF-8"):
@@ -118,6 +116,15 @@ class OfxFile(object):
             (key.decode(encoding), value.decode(encoding))
             for key, value in six.iteritems(self.headers)
         )
+
+    def replace_NONE_headers(self):
+        """
+        Any headers that indicate 'none' should be replaced with Python
+        None values
+        """
+        for header in self.headers:
+            if self.headers[header].upper() == 'NONE':
+                self.headers[header] = None
 
 
 class OfxPreprocessedFile(OfxFile):
