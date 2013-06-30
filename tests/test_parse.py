@@ -96,7 +96,7 @@ NEWFILEUID:NONE
         self.assertTrue(type(result) is six.text_type)
         for key, value in six.iteritems(headers):
             self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not str)
+            self.assertTrue(type(value) is not six.binary_type)
 
     def testUTF8Japanese(self):
         fh = six.BytesIO(six.b("""OFXHEADER:100
