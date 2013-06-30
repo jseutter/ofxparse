@@ -7,7 +7,10 @@ import codecs
 import re
 import collections
 
-import six
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from . import mcc
 
@@ -99,7 +102,7 @@ class OfxPreprocessedFile(OfxFile):
         # leave all other data intact
         last_open_tag = None
         tokens        = re.split(r'(?i)(</?[a-z0-9_\.]+>)', ofx_string)
-        new_fh        = six.moves.cStringIO()
+        new_fh        = StringIO()
         for idx,token in enumerate(tokens):
             is_closing_tag = token.startswith('</')
             is_processing_tag = token.startswith('<?')
