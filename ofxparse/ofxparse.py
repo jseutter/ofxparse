@@ -34,14 +34,16 @@ class OfxFile(object):
     def __init__(self, fh):
         self.headers = collections.OrderedDict()
         self.fh = fh
-        self.read_headers()
 
-    def read_headers(self):
         if not isinstance(self.fh, collections.Iterable):
             # fh is not iterable
             return
         if not hasattr(self.fh, "seek"):
             return  # fh is not a file object, we're doomed.
+
+        self.read_headers()
+
+    def read_headers(self):
 
         orig_pos = self.fh.tell()
         self.fh.seek(0)
