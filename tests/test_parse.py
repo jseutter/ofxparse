@@ -208,7 +208,7 @@ NEWFILEUID:NONE
 
 class TestParse(TestCase):
     def testEmptyFile(self):
-        fh = six.BytesIO("")
+        fh = six.BytesIO(six.b(""))
         self.assertRaises(OfxParserException, OfxParser.parse, fh)
 
     def testThatParseWorksWithoutErrors(self):
@@ -453,7 +453,7 @@ class TestInvestmentAccount(TestCase):
 '''
 
     def testThatParseCanCreateAnInvestmentAccount(self):
-        OfxParser.parse(six.BytesIO(self.sample))
+        OfxParser.parse(six.BytesIO(six.b(self.sample)))
         # Success!
 
 
