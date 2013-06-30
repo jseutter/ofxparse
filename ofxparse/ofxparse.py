@@ -36,6 +36,11 @@ def try_decode(string, encoding):
         string = string.decode(encoding)
     return string
 
+def is_iterable(candidate):
+    if sys.version_info < (2,6):
+        return hasattr(candidate, 'next')
+    return isinstance(candidate, collections.Iterable)
+
 @contextlib.contextmanager
 def save_pos(fh):
     """
@@ -57,8 +62,7 @@ class OfxFile(object):
         self.headers = odict.OrderedDict()
         self.fh = fh
 
-        if not isinstance(self.fh, collections.Iterable):
-            # fh is not iterable
+        if not is_iterable(self.fh):
             return
         if not hasattr(self.fh, "seek"):
             return  # fh is not a file object, we're doomed.
