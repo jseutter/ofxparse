@@ -15,6 +15,8 @@ except ImportError:
 
 import six
 
+from py26compat import collections as collections27
+
 from . import mcc
 
 def soup_maker(fh):
@@ -49,7 +51,7 @@ class OfxFile(object):
         """
         fh should be a seekable file-like byte stream object
         """
-        self.headers = collections.OrderedDict()
+        self.headers = collections27.OrderedDict()
         self.fh = fh
 
         if not isinstance(self.fh, collections.Iterable):
@@ -83,7 +85,7 @@ class OfxFile(object):
         subsequently returns only text.
         """
         # decode the headers using ascii
-        ascii_headers = collections.OrderedDict(
+        ascii_headers = collections27.OrderedDict(
             (
                 key.decode('ascii', errors='replace'),
                 value.decode('ascii', errors='replace'),
@@ -112,7 +114,7 @@ class OfxFile(object):
         self.fh = codec.streamreader(self.fh)
 
         # Decode the headers using the encoding
-        self.headers = collections.OrderedDict(
+        self.headers = collections27.OrderedDict(
             (key.decode(encoding), value.decode(encoding))
             for key, value in six.iteritems(self.headers)
         )

@@ -3,6 +3,8 @@ import copy
 import collections
 import xml.etree.ElementTree as ET
 
+from py26compat import collections as collections27
+
 import six
 
 class InvalidOFXStructureException(Exception):
@@ -10,7 +12,7 @@ class InvalidOFXStructureException(Exception):
 
 class OfxData(object):
     def __init__(self, tag):
-        self.nodes = collections.OrderedDict()
+        self.nodes = collections27.OrderedDict()
         self.tag = tag
         self.data = ""
 
@@ -119,7 +121,7 @@ class OfxData(object):
 class OfxUtil(OfxData):
     def __init__(self, ofx_data=None):
         super(OfxUtil, self).__init__('OFX')
-        self.headers = collections.OrderedDict()
+        self.headers = collections27.OrderedDict()
         self.xml = ""
         if ofx_data:
             if isinstance(ofx_data, six.string_types) and not ofx_data.lower().endswith('.ofx'):
