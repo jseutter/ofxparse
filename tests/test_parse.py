@@ -1,19 +1,22 @@
+from __future__ import absolute_import
+
 from ofxparse.ofxparse import soup_maker
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest import TestCase
-from StringIO import StringIO
 import sys
 sys.path.append('..')
 
-from support import open_file
+import six
+
+from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException
 
 class TestOfxPreprocessedFile(TestCase):
 
     def testPreprocess(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -56,7 +59,7 @@ NEWFILEUID:NONE
         self.assertEquals(expect, ofx.headers)
 
     def testUTF8(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -70,13 +73,13 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         data = ofx_file.fh.read()
 
-        self.assertTrue(type(data) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(data) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testCP1252(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -90,13 +93,13 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         result = ofx_file.fh.read()
 
-        self.assertTrue(type(result) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testUTF8Japanese(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -110,13 +113,13 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         result = ofx_file.fh.read()
 
-        self.assertTrue(type(result) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testBrokenLineEndings(self):
-        fh = StringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        fh = six.moves.cStringIO("OFXHEADER:100\rDATA:OFXSGML\r")
         ofx_file = OfxPreprocessedFile(fh)
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
@@ -138,7 +141,7 @@ class TestOfxFile(TestCase):
         self.assertEquals(expect, ofx.headers)
 
     def testUTF8(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -152,13 +155,13 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         data = ofx_file.fh.read()
 
-        self.assertTrue(type(data) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(data) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testCP1252(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -172,13 +175,13 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         result = ofx_file.fh.read()
 
-        self.assertTrue(type(result) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testUTF8Japanese(self):
-        fh = StringIO("""OFXHEADER:100
+        fh = six.moves.cStringIO("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -192,20 +195,20 @@ NEWFILEUID:NONE
         headers = ofx_file.headers
         result = ofx_file.fh.read()
 
-        self.assertTrue(type(result) is unicode)
-        for key, value in headers.iteritems():
-            self.assertTrue(type(key) is unicode)
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
             self.assertTrue(type(value) is not str)
 
     def testBrokenLineEndings(self):
-        fh = StringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        fh = six.moves.cStringIO("OFXHEADER:100\rDATA:OFXSGML\r")
         ofx_file = OfxFile(fh)
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
 
 class TestParse(TestCase):
     def testEmptyFile(self):
-        fh = StringIO("")
+        fh = six.moves.cStringIO("")
         self.assertRaises(OfxParserException, OfxParser.parse, fh)
 
     def testThatParseWorksWithoutErrors(self):
@@ -278,9 +281,9 @@ class TestStringToDate(TestCase):
         self.assertEquals(OfxParser.parseOfxDateTime('19881201'),
                           datetime(1988, 12, 1, 0, 0))
         self.assertEquals(OfxParser.parseOfxDateTime('19881201230100'),
-                          datetime(1988, 12, 1, 23, 01))
+                          datetime(1988, 12, 1, 23, 1))
         self.assertEquals(OfxParser.parseOfxDateTime('20120229230100'),
-                          datetime(2012, 2, 29, 23, 01))
+                          datetime(2012, 2, 29, 23, 1))
 
     def test_parses_time_offset(self):
         ''' Test that we handle GMT offset '''
@@ -296,10 +299,10 @@ class TestStringToDate(TestCase):
             datetime(2012, 3, 1, 5, 1))
         self.assertEquals(
             OfxParser.parseOfxDateTime('20120412120000 [-5.5:XXX]'),
-            datetime(2012, 04, 12, 17, 30))
+            datetime(2012, 4, 12, 17, 30))
         self.assertEquals(
             OfxParser.parseOfxDateTime('20120412120000 [-5:XXX]'),
-            datetime(2012, 04, 12, 17))
+            datetime(2012, 4, 12, 17))
         self.assertEquals(
             OfxParser.parseOfxDateTime('20120922230000 [+9:JST]'),
             datetime(2012, 9, 22, 14, 0))
@@ -450,7 +453,7 @@ class TestInvestmentAccount(TestCase):
 '''
 
     def testThatParseCanCreateAnInvestmentAccount(self):
-        OfxParser.parse(StringIO(self.sample))
+        OfxParser.parse(six.moves.cStringIO(self.sample))
         # Success!
 
 

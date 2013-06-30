@@ -19,6 +19,11 @@ else:
         "beautifulsoup4"
     ]
 
+
+REQUIRES.extend([
+    'six',
+])
+
 setup_params = dict(
     name='ofxparse',
     version=VERSION,
@@ -50,7 +55,6 @@ setup_params = dict(
     install_requires=REQUIRES,
     entry_points="""
     """,
-    use_2to3=True,
     test_suite='tests',
     )
 

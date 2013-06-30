@@ -3,6 +3,8 @@ import copy
 import collections
 import xml.etree.ElementTree as ET
 
+import six
+
 class InvalidOFXStructureException(Exception):
     pass
 
@@ -120,10 +122,10 @@ class OfxUtil(OfxData):
         self.headers = collections.OrderedDict()
         self.xml = ""
         if ofx_data:
-            if isinstance(ofx_data, basestring) and not ofx_data.lower().endswith('.ofx'):
+            if isinstance(ofx_data, six.string_types) and not ofx_data.lower().endswith('.ofx'):
                 self.parse(ofx_data)
             else:
-                self.parse(file(ofx_data).read() if isinstance(ofx_data, basestring) else ofx_data.read())
+                self.parse(open(ofx_data).read() if isinstance(ofx_data, six.string_types) else ofx_data.read())
 
     def parse(self, ofx):
         try:
@@ -231,12 +233,12 @@ if __name__ == "__main__":
         transaction.notes = "Acknowledged"
 
 #    for bal in ofx['bal']:
-#        print bal
+#        print(bal)
 
 #    ofx.test = "First assignment operation"
 #    ofx.test = "Second assignment operation"
 #
-    print ofx
+    print(ofx)
 
     #Write OFX data to output file
 #    ofx.write('out.ofx')

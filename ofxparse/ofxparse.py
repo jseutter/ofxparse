@@ -1,10 +1,15 @@
+from __future__ import absolute_import
+
+import sys
 import decimal
 import datetime
 import codecs
-import mcc
 import re
-import StringIO
 import collections
+
+import six
+
+from . import mcc
 
 def soup_maker(fh):
     try:
@@ -94,7 +99,7 @@ class OfxPreprocessedFile(OfxFile):
         # leave all other data intact
         last_open_tag = None
         tokens        = re.split(r'(?i)(</?[a-z0-9_\.]+>)', ofx_string)
-        new_fh        = StringIO.StringIO()
+        new_fh        = six.moves.cStringIO()
         for idx,token in enumerate(tokens):
             is_closing_tag = token.startswith('</')
             is_processing_tag = token.startswith('<?')
@@ -487,7 +492,8 @@ class OfxParser(object):
                     statement.warnings.append(u'Empty start date.')
                     if cls_.fail_fast:
                         raise
-                except ValueError, e:
+                except ValueError:
+                    e = sys.exc_info()[1]
                     statement.warnings.append(u'Invalid start date: %s' % e)
                     if cls_.fail_fast:
                         raise
@@ -499,7 +505,8 @@ class OfxParser(object):
                         tag.contents[0].strip())
                 except IndexError:
                     statement.warnings.append(u'Empty end date.')
-                except ValueError, e:
+                except ValueError:
+                    e = sys.exc_info()[1]
                     statement.warnings.append(u'Invalid end date: %s' % e)
                     if cls_.fail_fast:
                         raise
@@ -510,7 +517,8 @@ class OfxParser(object):
                     statement.positions.append(
                         cls_.parseInvestmentPosition(investment_ofx))
             except (ValueError, IndexError, decimal.InvalidOperation,
-                    TypeError), e:
+                    TypeError):
+                e = sys.exc_info()[1]
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
@@ -524,7 +532,8 @@ class OfxParser(object):
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
                         cls_.parseInvestmentTransaction(investment_ofx))
-            except (ValueError, IndexError, decimal.InvalidOperation), e:
+            except (ValueError, IndexError, decimal.InvalidOperation):
+                e = sys.exc_info()[1]
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
@@ -616,7 +625,8 @@ class OfxParser(object):
                     u"Statement start date was empty for %s" % stmt_ofx)
                 if cls_.fail_fast:
                     raise
-            except ValueError, ve:
+            except ValueError:
+                ve = sys.exc_info()[1]
                 statement.warnings.append(
                     u"Statement start date was not formatted correctly for"
                     u" %s" % stmt_ofx)
@@ -645,7 +655,8 @@ class OfxParser(object):
                 try:
                     statement.balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except (IndexError, decimal.InvalidOperation), ex:
+                except (IndexError, decimal.InvalidOperation):
+                    ex = sys.exc_info()[1]
                     statement.warnings.append(
                         u"Ledger balance amount was empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
@@ -658,7 +669,8 @@ class OfxParser(object):
                 try:
                     statement.available_balance = decimal.Decimal(
                         balamt_tag.contents[0].strip())
-                except (IndexError, decimal.InvalidOperation), ex:
+                except (IndexError, decimal.InvalidOperation):
+                    ex = sys.exc_info()[1]
                     statement.warnings.append(u"Available balance amount was"
                                               u" empty for %s" % stmt_ofx)
                     if cls_.fail_fast:
@@ -668,7 +680,8 @@ class OfxParser(object):
             try:
                 statement.transactions.append(
                     cls_.parseTransaction(transaction_ofx))
-            except OfxParserException, ofxError:
+            except OfxParserException:
+                ofxError = sys.exc_info()[1]
                 statement.discarded_entries.append(
                     {'error': str(ofxError), 'content': transaction_ofx})
                 if cls_.fail_fast:
@@ -737,7 +750,8 @@ class OfxParser(object):
                     date_tag.contents[0].strip())
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
-            except ValueError, ve:
+            except ValueError:
+                ve = sys.exc_info()[1]
                 raise OfxParserException(str(ve))
             except TypeError:
                 raise OfxParserException(
