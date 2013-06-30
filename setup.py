@@ -1,13 +1,14 @@
+import re
+import platform
+
 from setuptools import setup, find_packages
 
 # Read the version from __init__ to avoid importing ofxparse while installing.
 # This lets the install work when the user does not have BeautifulSoup
 # installed.
-import re
 VERSION = re.search(r"__version__ = '(.*?)'",
                     open("ofxparse/__init__.py").read()).group(1)
 
-import platform
 python_v = platform.python_version_tuple()
 if int(python_v[0]) == 2 and int(python_v[1]) < 6:
     # python 2.5 (and presumably 2.4) does not like beautiful soup 4
