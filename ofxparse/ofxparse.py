@@ -57,6 +57,7 @@ class OfxFile(object):
 
         with save_pos(self.fh):
             self.read_headers()
+            self.handle_encoding()
 
     def read_headers(self):
         head_data = self.fh.read(1024 * 10)
@@ -75,6 +76,7 @@ class OfxFile(object):
 
             self.headers[header] = value
 
+    def handle_encoding(self):
         # Look for the encoding
         enc_type = self.headers.get("ENCODING")
         if enc_type:
