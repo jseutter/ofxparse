@@ -16,7 +16,7 @@ from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException
 class TestOfxPreprocessedFile(TestCase):
 
     def testPreprocess(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -27,7 +27,7 @@ OLDFILEUID:NONE
 NEWFILEUID:NONE
 
 <OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE><VAL.UE>a<VAL_UE>b<TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net<DTASOF>2222</BAL><BAL><NAME>Gross<DTASOF>3333</BAL></BALLIST></INVBAL></OFX>
-""")
+"""))
         expect = """OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
@@ -99,7 +99,7 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testUTF8Japanese(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -108,7 +108,7 @@ CHARSET:CSUNICODE
 COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
-""")
+"""))
         ofx_file = OfxPreprocessedFile(fh)
         headers = ofx_file.headers
         result = ofx_file.fh.read()
@@ -141,7 +141,7 @@ class TestOfxFile(TestCase):
         self.assertEquals(expect, ofx.headers)
 
     def testUTF8(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -150,7 +150,7 @@ COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
 
-""")
+"""))
         ofx_file = OfxFile(fh)
         headers = ofx_file.headers
         data = ofx_file.fh.read()
@@ -161,7 +161,7 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testCP1252(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -170,7 +170,7 @@ CHARSET: 1252
 COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
-""")
+"""))
         ofx_file = OfxFile(fh)
         headers = ofx_file.headers
         result = ofx_file.fh.read()
@@ -181,7 +181,7 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testUTF8Japanese(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -190,7 +190,7 @@ CHARSET:CSUNICODE
 COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
-""")
+"""))
         ofx_file = OfxFile(fh)
         headers = ofx_file.headers
         result = ofx_file.fh.read()
@@ -201,14 +201,14 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testBrokenLineEndings(self):
-        fh = six.moves.cStringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
         ofx_file = OfxFile(fh)
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
 
 class TestParse(TestCase):
     def testEmptyFile(self):
-        fh = six.moves.cStringIO("")
+        fh = six.BytesIO("")
         self.assertRaises(OfxParserException, OfxParser.parse, fh)
 
     def testThatParseWorksWithoutErrors(self):
@@ -453,7 +453,7 @@ class TestInvestmentAccount(TestCase):
 '''
 
     def testThatParseCanCreateAnInvestmentAccount(self):
-        OfxParser.parse(six.moves.cStringIO(self.sample))
+        OfxParser.parse(six.BytesIO(self.sample))
         # Success!
 
 
