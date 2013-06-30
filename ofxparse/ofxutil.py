@@ -71,7 +71,7 @@ class OfxData(object):
         return item_list
 
     def find(self, name, item_list):
-        for n, child in self.nodes.iteritems():
+        for n, child in six.iteritems(self.nodes):
             if isinstance(child, OfxData):
                 if child.tag.lower() == name:
                     item_list.append(child)
@@ -83,7 +83,7 @@ class OfxData(object):
                     grandchild.find(name, item_list)
 
     def __iter__(self):
-        for k, v in self.nodes.iteritems():
+        for k, v in six.iteritems(self.nodes):
             yield v
 
     def __contains__(self, item):
@@ -102,7 +102,7 @@ class OfxData(object):
             return [["<%s>%s" % (self.tag, self.data), 0]]
         else:
             ret = [["<%s>" % self.tag, -1]]
-            for name, child in self.nodes.iteritems():
+            for name, child in six.iteritems(self.nodes):
                 if isinstance(child, OfxData):
                     ret.extend(child.format())
                 else:
@@ -202,7 +202,7 @@ class OfxUtil(OfxData):
             f.write(str(self))
 
     def __str__(self):
-        ret = os.linesep.join(":".join(line) for line in self.headers.iteritems()) + os.linesep * 2
+        ret = os.linesep.join(":".join(line) for line in six.iteritems(self.headers) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
         return ret
 

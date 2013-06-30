@@ -12,6 +12,8 @@ try:
 except ImportError:
     from io import StringIO
 
+import six
+
 from . import mcc
 
 def soup_maker(fh):
@@ -77,7 +79,7 @@ class OfxFile(object):
 
                 # Decode the headers
                 uheaders = collections.OrderedDict()
-                for key, value in self.headers.iteritems():
+                for key, value in six.iteritems(self.headers):
                     key = key.decode(encoding)
 
                     if type(value) is str:
@@ -128,7 +130,7 @@ class OfxPreprocessedFile(OfxFile):
 class Ofx(object):
     def __str__(self):
         return ""
-#        headers = "\r\n".join(":".join(el if el else "NONE" for el in item) for item in self.headers.iteritems())
+#        headers = "\r\n".join(":".join(el if el else "NONE" for el in item) for item in six.iteritems(self.headers))
 #        headers += "\r\n\r\n"
 #
 #        return headers + str(self.signon)
