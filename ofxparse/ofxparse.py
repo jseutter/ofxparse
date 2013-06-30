@@ -46,6 +46,9 @@ def save_pos(fh):
 
 class OfxFile(object):
     def __init__(self, fh):
+        """
+        fh should be a seekable file-like byte stream object
+        """
         self.headers = collections.OrderedDict()
         self.fh = fh
 
@@ -77,31 +80,44 @@ class OfxFile(object):
             self.headers[header] = value
 
     def handle_encoding(self):
-        # Look for the encoding
-        enc_type = self.headers.get("ENCODING")
-        if enc_type:
-            encoding = None  # Unknown
+        """
+        Decode the headers and wrap self.fh in a decoder such that it
+        subsequently returns only text.
+        """
+        # decode the headers using ascii
+        ascii_headers = collections.OrderedDict(
+            (
+                key.decode('ascii', errors='replace'),
+                value.decode('ascii', errors='replace'),
+            )
+            for key, value in six.iteritems(self.headers)
+        )
 
-            if enc_type == "USASCII":
-                cp = self.headers.get("CHARSET", "1252")
-                encoding = "cp%s" % (cp, )
+        enc_type = ascii_headers.get('ENCODING')
 
-            elif enc_type in ("UNICODE", "UTF-8"):
-                encoding = "utf-8"
+        if not enc_type:
+            # no encoding specified, use the ascii-decoded headers
+            self.headers = ascii_headers
+            # decode the body as ascii as well
+            self.fh = codecs.lookup('ascii').streamreader(self.fh)
+            return
 
-            try:
-                codec = codecs.lookup(encoding)
-            except LookupError:
-                encoding = None
+        if enc_type == "USASCII":
+            cp = self.headers.get("CHARSET", "1252")
+            encoding = "cp%s" % (cp, )
 
-            if encoding:
-                self.fh = codec.streamreader(self.fh)
+        elif enc_type in ("UNICODE", "UTF-8"):
+            encoding = "utf-8"
 
-                # Decode the headers
-                self.headers = collections.OrderedDict(
-                    (try_decode(key, encoding), try_decode(value, encoding))
-                    for key, value in six.iteritems(self.headers)
-                )
+        codec = codecs.lookup(encoding)
+
+        self.fh = codec.streamreader(self.fh)
+
+        # Decode the headers using the encoding
+        self.headers = collections.OrderedDict(
+            (key.decode(encoding), value.decode(encoding))
+            for key, value in six.iteritems(self.headers)
+        )
 
 
 class OfxPreprocessedFile(OfxFile):
