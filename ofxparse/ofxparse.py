@@ -47,17 +47,17 @@ class OfxFile(object):
         self.fh.seek(0)
 
         head_data = self.fh.read(1024 * 10)
-        head_data = head_data[:head_data.find('<')]
+        head_data = head_data[:head_data.find(six.b('<'))]
 
-        for line in re.split('\r?\n?', head_data):
+        for line in re.split(six.b('\r?\n?'), head_data):
             # Newline?
-            if line.strip() == "":
+            if line.strip() == six.b(""):
                 break
 
-            header, value = line.split(":")
+            header, value = line.split(six.b(":"))
             header, value = header.strip().upper(), value.strip()
 
-            if value.upper() == "NONE":
+            if value.upper() == six.b("NONE"):
                 value = None
 
             self.headers[header] = value

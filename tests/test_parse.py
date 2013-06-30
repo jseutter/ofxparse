@@ -59,7 +59,7 @@ NEWFILEUID:NONE
         self.assertEquals(expect, ofx.headers)
 
     def testUTF8(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -68,7 +68,7 @@ COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
 
-""")
+"""))
         ofx_file = OfxPreprocessedFile(fh)
         headers = ofx_file.headers
         data = ofx_file.fh.read()
@@ -79,7 +79,7 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testCP1252(self):
-        fh = six.moves.cStringIO("""OFXHEADER:100
+        fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
 VERSION:102
 SECURITY:NONE
@@ -88,7 +88,7 @@ CHARSET: 1252
 COMPRESSION:NONE
 OLDFILEUID:NONE
 NEWFILEUID:NONE
-""")
+"""))
         ofx_file = OfxPreprocessedFile(fh)
         headers = ofx_file.headers
         result = ofx_file.fh.read()
@@ -119,7 +119,7 @@ NEWFILEUID:NONE
             self.assertTrue(type(value) is not str)
 
     def testBrokenLineEndings(self):
-        fh = six.moves.cStringIO("OFXHEADER:100\rDATA:OFXSGML\r")
+        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
         ofx_file = OfxPreprocessedFile(fh)
         self.assertEquals(len(ofx_file.headers.keys()), 2)
 
