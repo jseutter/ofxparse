@@ -312,7 +312,7 @@ class OfxParser(object):
         cls_.fail_fast = fail_fast
 
         if isinstance(file_handle, type('')):
-            raise RuntimeError(u"parse() takes in a file handle, not a string")
+            raise RuntimeError(six.u("parse() takes in a file handle, not a string"))
 
         ofx_obj = Ofx()
 
@@ -422,7 +422,7 @@ class OfxParser(object):
                     account.account_id = acctid_tag.contents[0].strip()
                 except IndexError:
                     account.warnings.append(
-                        u"Empty acctid tag for %s" % invstmtrs_ofx)
+                        six.u("Empty acctid tag for %s") % invstmtrs_ofx)
                     if cls_.fail_fast:
                         raise
 
@@ -432,7 +432,7 @@ class OfxParser(object):
                     account.brokerid = brokerid_tag.contents[0].strip()
                 except IndexError:
                     account.warnings.append(
-                        u"Empty brokerid tag for %s" % invstmtrs_ofx)
+                        six.u("Empty brokerid tag for %s") % invstmtrs_ofx)
                     if cls_.fail_fast:
                         raise
 
@@ -566,7 +566,7 @@ class OfxParser(object):
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
-                    {six.u('error'): u"Error parsing positions: " + str(e),
+                    {six.u('error'): six.u("Error parsing positions: ") + str(e),
                      six.u('content'): investment_ofx}
                 )
 
@@ -650,12 +650,12 @@ class OfxParser(object):
                     dtstart_tag.contents[0].strip())
             except IndexError:
                 statement.warnings.append(
-                    u"Statement start date was empty for %s" % stmt_ofx)
+                    six.u("Statement start date was empty for %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except ValueError:
                 statement.warnings.append(
-                    u"Statement start date was not allowed for %s" % stmt_ofx)
+                    six.u("Statement start date was not allowed for %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -666,19 +666,19 @@ class OfxParser(object):
                     dtend_tag.contents[0].strip())
             except IndexError:
                 statement.warnings.append(
-                    u"Statement start date was empty for %s" % stmt_ofx)
+                    six.u("Statement start date was empty for %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except ValueError:
                 ve = sys.exc_info()[1]
                 statement.warnings.append(
-                    u"Statement start date was not formatted correctly for"
-                    u" %s" % stmt_ofx)
+                    six.u("Statement start date was not formatted correctly for")
+                    six.u(" %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except TypeError:
                 statement.warnings.append(
-                    u"Statement start date was not allowed for %s" % stmt_ofx)
+                    six.u("Statement start date was not allowed for %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -688,7 +688,7 @@ class OfxParser(object):
                 statement.currency = currency_tag.contents[0].strip().lower()
             except IndexError:
                 statement.warnings.append(
-                    u"Currency definition was empty for %s" % stmt_ofx)
+                    six.u("Currency definition was empty for %s") % stmt_ofx)
                 if cls_.fail_fast:
                     raise
 
@@ -702,7 +702,7 @@ class OfxParser(object):
                 except (IndexError, decimal.InvalidOperation):
                     ex = sys.exc_info()[1]
                     statement.warnings.append(
-                        u"Ledger balance amount was empty for %s" % stmt_ofx)
+                        six.u("Ledger balance amount was empty for %s") % stmt_ofx)
                     if cls_.fail_fast:
                         raise OfxParserException("Empty ledger balance")
 
@@ -715,8 +715,8 @@ class OfxParser(object):
                         balamt_tag.contents[0].strip())
                 except (IndexError, decimal.InvalidOperation):
                     ex = sys.exc_info()[1]
-                    statement.warnings.append(u"Available balance amount was"
-                                              u" empty for %s" % stmt_ofx)
+                    statement.warnings.append(six.u("Available balance amount was")
+                                              six.u(" empty for %s") % stmt_ofx)
                     if cls_.fail_fast:
                         raise OfxParserException("Empty available balance")
 
@@ -745,20 +745,20 @@ class OfxParser(object):
             try:
                 transaction.type = type_tag.contents[0].lower().strip()
             except IndexError:
-                raise OfxParserException(u"Empty transaction type")
+                raise OfxParserException(six.u("Empty transaction type"))
             except TypeError:
                 raise OfxParserException(
-                    u"No Transaction type (a required field)")
+                    six.u("No Transaction type (a required field)"))
 
         name_tag = txn_ofx.find('name')
         if hasattr(name_tag, "contents"):
             try:
                 transaction.payee = name_tag.contents[0].strip()
             except IndexError:
-                raise OfxParserException(u"Empty transaction name")
+                raise OfxParserException(six.u("Empty transaction name"))
             except TypeError:
                 raise OfxParserException(
-                    u"No Transaction name (a required field)")
+                    six.u("No Transaction name (a required field)"))
 
         memo_tag = txn_ofx.find('memo')
         if hasattr(memo_tag, "contents"):
@@ -779,13 +779,13 @@ class OfxParser(object):
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
                 raise OfxParserException(
-                    u"Invalid Transaction Amount: '%s'" % amt_tag.contents[0])
+                    six.u("Invalid Transaction Amount: '%s'") % amt_tag.contents[0])
             except TypeError:
                 raise OfxParserException(
-                    u"No Transaction Amount (a required field)")
+                    six.u("No Transaction Amount (a required field)"))
         else:
             raise OfxParserException(
-                u"Missing Transaction Amount (a required field)")
+                six.u("Missing Transaction Amount (a required field)"))
 
         date_tag = txn_ofx.find('dtposted')
         if hasattr(date_tag, "contents"):
@@ -799,34 +799,34 @@ class OfxParser(object):
                 raise OfxParserException(str(ve))
             except TypeError:
                 raise OfxParserException(
-                    u"No Transaction Date (a required field)")
+                    six.u("No Transaction Date (a required field)"))
         else:
             raise OfxParserException(
-                u"Missing Transaction Date (a required field)")
+                six.u("Missing Transaction Date (a required field)"))
 
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):
             try:
                 transaction.id = id_tag.contents[0].strip()
             except IndexError:
-                raise OfxParserException(u"Empty FIT id (a required field)")
+                raise OfxParserException(six.u("Empty FIT id (a required field)"))
             except TypeError:
-                raise OfxParserException(u"No FIT id (a required field)")
+                raise OfxParserException(six.u("No FIT id (a required field)"))
         else:
-            raise OfxParserException(u"Missing FIT id (a required field)")
+            raise OfxParserException(six.u("Missing FIT id (a required field)"))
 
         sic_tag = txn_ofx.find('sic')
         if hasattr(sic_tag, 'contents'):
             try:
                 transaction.sic = sic_tag.contents[0].strip()
             except IndexError:
-                raise OfxParserException(u"Empty transaction Standard Industry Code (SIC)")
+                raise OfxParserException(six.u("Empty transaction Standard Industry Code (SIC)"))
 
         if transaction.sic is not None:
             try:
                 transaction.mcc = mcc.codes.get(transaction.sic, '').get('combined description')
             except IndexError:
-                raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
+                raise OfxParserException(six.u("Empty transaction Merchant Category Code (MCC)"))
 
 
         return transaction
