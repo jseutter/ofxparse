@@ -1,5 +1,5 @@
 import re
-import platform
+import sys
 
 from setuptools import setup, find_packages
 
@@ -9,9 +9,8 @@ from setuptools import setup, find_packages
 VERSION = re.search(r"__version__ = '(.*?)'",
                     open("ofxparse/__init__.py").read()).group(1)
 
-python_v = platform.python_version_tuple()
-if int(python_v[0]) == 2 and int(python_v[1]) < 6:
-    # python 2.5 (and presumably 2.4) does not like beautiful soup 4
+# Use BeautifulSoup 3 on Python 2.5 and earlier and BeautifulSoup 4 otherwise
+if sys.version_info < (2,6):
     REQUIRES = [
         "beautifulSoup>=3.0",
     ]
