@@ -533,12 +533,12 @@ class OfxParser(object):
                     statement.start_date = cls_.parseOfxDateTime(
                         tag.contents[0].strip())
                 except IndexError:
-                    statement.warnings.append(u'Empty start date.')
+                    statement.warnings.append(six.u('Empty start date.'))
                     if cls_.fail_fast:
                         raise
                 except ValueError:
                     e = sys.exc_info()[1]
-                    statement.warnings.append(u'Invalid start date: %s' % e)
+                    statement.warnings.append(six.u('Invalid start date: %s') % e)
                     if cls_.fail_fast:
                         raise
 
@@ -548,10 +548,10 @@ class OfxParser(object):
                     statement.end_date = cls_.parseOfxDateTime(
                         tag.contents[0].strip())
                 except IndexError:
-                    statement.warnings.append(u'Empty end date.')
+                    statement.warnings.append(six.u('Empty end date.'))
                 except ValueError:
                     e = sys.exc_info()[1]
-                    statement.warnings.append(u'Invalid end date: %s' % e)
+                    statement.warnings.append(six.u('Invalid end date: %s') % e)
                     if cls_.fail_fast:
                         raise
 
@@ -566,8 +566,8 @@ class OfxParser(object):
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
-                    {u'error': u"Error parsing positions: " + str(e),
-                     u'content': investment_ofx}
+                    {six.u('error'): u"Error parsing positions: " + str(e),
+                     six.u('content'): investment_ofx}
                 )
 
         for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
@@ -581,8 +581,8 @@ class OfxParser(object):
                 if cls_.fail_fast:
                     raise
                 statement.discarded_entries.append(
-                    {u'error': transaction_type + ": " + str(e),
-                     u'content': investment_ofx}
+                    {six.u('error'): transaction_type + ": " + str(e),
+                     six.u('content'): investment_ofx}
                 )
 
         return statement

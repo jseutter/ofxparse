@@ -45,12 +45,12 @@ NEWFILEUID:NONE
         self.assertEqual(data,expect)
 
     def testHeaders(self):
-        expect = {"OFXHEADER": u"100",
-                  "DATA": u"OFXSGML",
-                  "VERSION": u"102",
+        expect = {"OFXHEADER": six.u("100"),
+                  "DATA": six.u("OFXSGML"),
+                  "VERSION": six.u("102"),
                   "SECURITY": None,
-                  "ENCODING": u"USASCII",
-                  "CHARSET": u"1252",
+                  "ENCODING": six.u("USASCII"),
+                  "CHARSET": six.u("1252"),
                   "COMPRESSION": None,
                   "OLDFILEUID": None,
                   "NEWFILEUID": None,
@@ -127,12 +127,12 @@ NEWFILEUID:NONE
 
 class TestOfxFile(TestCase):
     def testHeaders(self):
-        expect = {"OFXHEADER": u"100",
-                  "DATA": u"OFXSGML",
-                  "VERSION": u"102",
+        expect = {"OFXHEADER": six.u("100"),
+                  "DATA": six.u("OFXSGML"),
+                  "VERSION": six.u("102"),
                   "SECURITY": None,
-                  "ENCODING": u"USASCII",
-                  "CHARSET": u"1252",
+                  "ENCODING": six.u("USASCII"),
+                  "CHARSET": six.u("1252"),
                   "COMPRESSION": None,
                   "OLDFILEUID": None,
                   "NEWFILEUID": None,
