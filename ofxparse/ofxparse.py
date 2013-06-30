@@ -268,7 +268,7 @@ class InvestmentTransaction(object):
     def __init__(self, type):
         try:
             self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock'].index(type.lower())
-        except ValueError as e:
+        except ValueError:
             self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
         self.settleDate = None
