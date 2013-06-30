@@ -19,10 +19,13 @@ else:
         "beautifulsoup4"
     ]
 
+if sys.version_info < (2,7):
+    REQUIRES.extend([
+        "ordereddict>=1.1",
+    ])
 
 REQUIRES.extend([
     'six',
-    'jaraco.compat',
 ])
 
 setup_params = dict(

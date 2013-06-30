@@ -3,7 +3,10 @@ import copy
 import collections
 import xml.etree.ElementTree as ET
 
-from py26compat import collections as collections27
+if 'OrderedDict' in dir(collections):
+    odict = collections
+else:
+    import ordereddict as odict
 
 import six
 
@@ -12,7 +15,7 @@ class InvalidOFXStructureException(Exception):
 
 class OfxData(object):
     def __init__(self, tag):
-        self.nodes = collections27.OrderedDict()
+        self.nodes = odict.OrderedDict()
         self.tag = tag
         self.data = ""
 
@@ -121,7 +124,7 @@ class OfxData(object):
 class OfxUtil(OfxData):
     def __init__(self, ofx_data=None):
         super(OfxUtil, self).__init__('OFX')
-        self.headers = collections27.OrderedDict()
+        self.headers = odict.OrderedDict()
         self.xml = ""
         if ofx_data:
             if isinstance(ofx_data, six.string_types) and not ofx_data.lower().endswith('.ofx'):

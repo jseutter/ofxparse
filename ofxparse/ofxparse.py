@@ -15,7 +15,10 @@ except ImportError:
 
 import six
 
-from py26compat import collections as collections27
+if 'OrderedDict' in dir(collections):
+    odict = collections
+else:
+    import ordereddict as odict
 
 from . import mcc
 
@@ -51,7 +54,7 @@ class OfxFile(object):
         """
         fh should be a seekable file-like byte stream object
         """
-        self.headers = collections27.OrderedDict()
+        self.headers = odict.OrderedDict()
         self.fh = fh
 
         if not isinstance(self.fh, collections.Iterable):
@@ -85,7 +88,7 @@ class OfxFile(object):
         subsequently returns only text.
         """
         # decode the headers using ascii
-        ascii_headers = collections27.OrderedDict(
+        ascii_headers = odict.OrderedDict(
             (
                 key.decode('ascii', 'replace'),
                 value.decode('ascii', 'replace'),
@@ -114,7 +117,7 @@ class OfxFile(object):
         self.fh = codec.streamreader(self.fh)
 
         # Decode the headers using the encoding
-        self.headers = collections27.OrderedDict(
+        self.headers = odict.OrderedDict(
             (key.decode(encoding), value.decode(encoding))
             for key, value in six.iteritems(self.headers)
         )
