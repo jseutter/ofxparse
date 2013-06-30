@@ -19,7 +19,7 @@ else:
         "beautifulsoup4"
     ]
 
-setup(name='ofxparse',
+setup_params = dict(name='ofxparse',
       version=VERSION,
       description=("Tools for working with the OFX (Open Financial Exchange)"
                    " file format"),
@@ -53,3 +53,6 @@ setup(name='ofxparse',
       use_2to3=True,
       test_suite='tests',
       )
+
+if __name__ == '__main__':
+    setup(**setup_params)
