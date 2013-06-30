@@ -22,6 +22,7 @@ else:
 
 REQUIRES.extend([
     'six',
+    'jaraco.compat',
 ])
 
 setup_params = dict(
