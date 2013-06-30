@@ -671,9 +671,9 @@ class OfxParser(object):
                     raise
             except ValueError:
                 ve = sys.exc_info()[1]
-                statement.warnings.append(
-                    six.u("Statement start date was not formatted correctly for")
-                    six.u(" %s") % stmt_ofx)
+                msg = six.u("Statement start date was not formatted "
+                    "correctly for %s")
+                statement.warnings.append(msg % stmt_ofx)
                 if cls_.fail_fast:
                     raise
             except TypeError:
@@ -715,8 +715,8 @@ class OfxParser(object):
                         balamt_tag.contents[0].strip())
                 except (IndexError, decimal.InvalidOperation):
                     ex = sys.exc_info()[1]
-                    statement.warnings.append(six.u("Available balance amount was")
-                                              six.u(" empty for %s") % stmt_ofx)
+                    msg = six.u("Available balance amount was empty for %s")
+                    statement.warnings.append(msg % stmt_ofx)
                     if cls_.fail_fast:
                         raise OfxParserException("Empty available balance")
 
