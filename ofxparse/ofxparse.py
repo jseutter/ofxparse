@@ -768,6 +768,9 @@ class OfxParser(object):
                 transaction.mcc = mcc.codes.get(transaction.sic, '').get('combined description')
             except IndexError:
                 raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
+            except AttributeError:
+                if cls_.fail_fast:
+                    raise
 
 
         return transaction
