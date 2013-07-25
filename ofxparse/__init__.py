@@ -1,3 +1,3 @@
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 
-__version__ = '0.11.wave'
+__version__ = '0.10'
