@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 from ofxparse import OfxParser as op
 from unittest import TestCase
 import sys
 sys.path.append('..')
-from support import open_file
+from .support import open_file
 
 class TestOfxWrite(TestCase):
     def test_write(self):

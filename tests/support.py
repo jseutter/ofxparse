@@ -6,4 +6,4 @@ def open_file(filename):
     path = 'fixtures/' + filename
     if ('tests' in os.listdir('.')):
         path = 'tests/' + path
-    return file(path)
+    return open(path, mode='rb')
