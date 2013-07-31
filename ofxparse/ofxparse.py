@@ -207,6 +207,7 @@ class Transaction(object):
         self.memo = ''
         self.sic = None
         self.mcc = ''
+        self.checknum = ''
 
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
@@ -769,5 +770,11 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(u"Empty transaction Merchant Category Code (MCC)")
 
+        checknum_tag = txn_ofx.find('checknum')
+        if hasattr(checknum_tag, 'contents'):
+            try:
+                transaction.checknum = checknum_tag.contents[0].strip()
+            except IndexError:
+                raise OfxParserException(u"Empty Check (or other reference) number")
 
         return transaction

@@ -418,6 +418,21 @@ class TestParseTransaction(TestCase):
         self.assertEquals("POS MERCHANDISE;MCDONALD'S #112", transaction.memo)
 
 
+    def testThatParseTransactionWithFieldCheckNum(self):
+        input = '''
+<STMTTRN>
+ <TRNTYPE>DEP
+ <DTPOSTED>20130306
+ <TRNAMT>1000.00
+ <FITID>2013030601009100
+ <CHECKNUM>700
+ <MEMO>DEPOSITO ONLINE
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEquals('700', transaction.checknum)
+
 class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
         t = Transaction()
@@ -427,6 +442,7 @@ class TestTransaction(TestCase):
         self.assertEquals(None, t.amount)
         self.assertEquals('', t.id)
         self.assertEquals('', t.memo)
+        self.assertEquals('', t.checknum)
 
 
 class TestInvestmentAccount(TestCase):
