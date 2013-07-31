@@ -1,14 +1,23 @@
+from __future__ import absolute_import, with_statement
+
 import os
 import copy
 import collections
 import xml.etree.ElementTree as ET
+
+if 'OrderedDict' in dir(collections):
+    odict = collections
+else:
+    import ordereddict as odict
+
+import six
 
 class InvalidOFXStructureException(Exception):
     pass
 
 class OfxData(object):
     def __init__(self, tag):
-        self.nodes = collections.OrderedDict()
+        self.nodes = odict.OrderedDict()
         self.tag = tag
         self.data = ""
 
@@ -69,7 +78,7 @@ class OfxData(object):
         return item_list
 
     def find(self, name, item_list):
-        for n, child in self.nodes.iteritems():
+        for n, child in six.iteritems(self.nodes):
             if isinstance(child, OfxData):
                 if child.tag.lower() == name:
                     item_list.append(child)
@@ -81,7 +90,7 @@ class OfxData(object):
                     grandchild.find(name, item_list)
 
     def __iter__(self):
-        for k, v in self.nodes.iteritems():
+        for k, v in six.iteritems(self.nodes):
             yield v
 
     def __contains__(self, item):
@@ -100,7 +109,7 @@ class OfxData(object):
             return [["<%s>%s" % (self.tag, self.data), 0]]
         else:
             ret = [["<%s>" % self.tag, -1]]
-            for name, child in self.nodes.iteritems():
+            for name, child in six.iteritems(self.nodes):
                 if isinstance(child, OfxData):
                     ret.extend(child.format())
                 else:
@@ -117,13 +126,13 @@ class OfxData(object):
 class OfxUtil(OfxData):
     def __init__(self, ofx_data=None):
         super(OfxUtil, self).__init__('OFX')
-        self.headers = collections.OrderedDict()
+        self.headers = odict.OrderedDict()
         self.xml = ""
         if ofx_data:
-            if isinstance(ofx_data, basestring) and not ofx_data.lower().endswith('.ofx'):
+            if isinstance(ofx_data, six.string_types) and not ofx_data.lower().endswith('.ofx'):
                 self.parse(ofx_data)
             else:
-                self.parse(file(ofx_data).read() if isinstance(ofx_data, basestring) else ofx_data.read())
+                self.parse(open(ofx_data).read() if isinstance(ofx_data, six.string_types) else ofx_data.read())
 
     def parse(self, ofx):
         try:
@@ -200,7 +209,7 @@ class OfxUtil(OfxData):
             f.write(str(self))
 
     def __str__(self):
-        ret = os.linesep.join(":".join(line) for line in self.headers.iteritems()) + os.linesep * 2
+        ret = os.linesep.join(":".join(line) for line in six.iteritems(self.headers) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
         return ret
 
@@ -231,12 +240,12 @@ if __name__ == "__main__":
         transaction.notes = "Acknowledged"
 
 #    for bal in ofx['bal']:
-#        print bal
+#        print(bal)
 
 #    ofx.test = "First assignment operation"
 #    ofx.test = "Second assignment operation"
 #
-    print ofx
+    print(ofx)
 
     #Write OFX data to output file
 #    ofx.write('out.ofx')
