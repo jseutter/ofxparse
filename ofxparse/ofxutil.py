@@ -209,7 +209,7 @@ class OfxUtil(OfxData):
             f.write(str(self))
 
     def __str__(self):
-        ret = os.linesep.join(":".join(line) for line in six.iteritems(self.headers) + os.linesep * 2
+        ret = os.linesep.join(":".join(line) for line in six.iteritems(self.headers)) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
         return ret
 
