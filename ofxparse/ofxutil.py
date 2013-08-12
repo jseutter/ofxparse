@@ -214,7 +214,8 @@ class OfxUtil(OfxData):
         return ret
 
 if __name__ == "__main__":
-    fixtures = '../tests/fixtures/'
+    here = os.path.dirname(__file__)
+    fixtures = os.path.join(here, '../tests/fixtures/')
     ofx = OfxUtil(fixtures + 'checking.ofx')
 #    ofx = OfxUtil(fixtures + 'fidelity.ofx')
 
