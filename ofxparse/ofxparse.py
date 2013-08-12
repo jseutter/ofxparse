@@ -843,6 +843,6 @@ class OfxParser(object):
             try:
                 transaction.checknum = checknum_tag.contents[0].strip()
             except IndexError:
-                raise OfxParserException(u"Empty Check (or other reference) number")
+                raise OfxParserException(six.u("Empty Check (or other reference) number"))
 
         return transaction
