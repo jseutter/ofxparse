@@ -832,11 +832,14 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException(six.u("Empty transaction Standard Industry Code (SIC)"))
 
-        if transaction.sic is not None:
+        if transaction.sic is not None and transaction.sic in mcc.codes:
             try:
                 transaction.mcc = mcc.codes.get(transaction.sic, '').get('combined description')
             except IndexError:
                 raise OfxParserException(six.u("Empty transaction Merchant Category Code (MCC)"))
+            except AttributeError:
+                if cls._fail_fast:
+                    raise
 
         checknum_tag = txn_ofx.find('checknum')
         if hasattr(checknum_tag, 'contents'):
