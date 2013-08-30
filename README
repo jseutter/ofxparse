@@ -1,15 +1,16 @@
 ofxparse
 ========
 
-ofxparse is a parser for Open Financial Exchange (.ofx) format files.  OFX files
-are available from almost any online banking site, so they work well if you
-want to pull together your finances from multiple sources.  Online trading accounts
-also provide account statements in OFX files.
+ofxparse is a parser for Open Financial Exchange (.ofx) format files.  OFX
+files are available from almost any online banking site, so they work well
+if you want to pull together your finances from multiple sources.  Online
+trading accounts also provide account statements in OFX files.
 
-There are three different types of OFX files.  This library has been tested with
-BankAccount files.  The other two types, CreditAccount and InvestmentAccount have
-not been tested.  If you have a sample of these other types that could be used to
-help this project, please see the Help! section below.
+There are three different types of OFX files, called BankAccount,
+CreditAccount and InvestmentAccount files.  This library has been tested with
+real-world samples of all three types.  If you find a file that does not work
+with this library, please consider contributing the file so ofxparse can be
+improved.  See the Help! section below for directions on how to do this.
 
 Example Usage
 =============
@@ -32,22 +33,28 @@ Here's a sample program::
 Help!
 =====
 
-I'm looking for different types of accounts to make this library more robust.  I'm looking for sample
-credit account or investment account files.  Please (anonymize first) and mail to jseutter dot ofxparse
-at gmail dot com.
+Sample .ofx files are very useful.  If you want to help us out, please edit
+all identifying information from the file and then email it to jseutter dot
+ofxparse at gmail dot com.
 
 Development
 ===========
 
 Prerequisites::
-(Ubuntu) sudo apt-get install python-beautifulsoup python-nose
-(pip) pip install BeautifulSoup nose
+(Ubuntu) sudo apt-get install python-beautifulsoup python-nose python-coverage-test-runner
+(pip) pip install BeautifulSoup nose coverage
 
 Tests::
 Simply running the "nose" command should run the tests.  If you don't have nose
 installed, the following might also work:
 
   python -m unittest tests.test_parse
+
+Test Coverage Report::
+
+  coverage run -m unittest tests.test_parse
+  coverage html
+  firefox htmlcov/index.html
 
 
 Homepage
