@@ -648,6 +648,37 @@ class OfxParser(object):
         return ret
 
     @classmethod
+    def parseBalance(cls_, statement, stmt_ofx, bal_tag_name, bal_attr, bal_date_attr, bal_type_string):
+        bal_tag = stmt_ofx.find(bal_tag_name)
+        if hasattr(bal_tag, "contents"):
+            balamt_tag = bal_tag.find('balamt')
+            dtasof_tag = bal_tag.find('dtasof')
+            if hasattr(balamt_tag, "contents"):
+                try:
+                    setattr(statement, bal_attr, decimal.Decimal(
+                        balamt_tag.contents[0].strip()))
+                except (IndexError, decimal.InvalidOperation):
+                    ex = sys.exc_info()[1]
+                    statement.warnings.append(
+                        six.u("%s balance amount was empty for %s") % (bal_type_string, stmt_ofx))
+                    if cls_.fail_fast:
+                        raise OfxParserException("Empty %s balance" % bal_type_string)
+            if hasattr(dtasof_tag, "contents"):
+                try:
+                    setattr(statement, bal_date_attr, cls_.parseOfxDateTime(
+                        dtasof_tag.contents[0].strip()))
+                except IndexError:
+                    statement.warnings.append(
+                        six.u("%s balance date was empty for %s") % (bal_type_string, stmt_ofx))
+                    if cls_.fail_fast:
+                        raise
+                except ValueError:
+                    statement.warnings.append(
+                        six.u("%s balance date was not allowed for %s") % (bal_type_string, stmt_ofx))
+                    if cls_.fail_fast:
+                        raise
+
+    @classmethod
     def parseStatement(cls_, stmt_ofx):
         '''
         Parse a statement in ofx-land and return a Statement object.
@@ -702,33 +733,9 @@ class OfxParser(object):
                 if cls_.fail_fast:
                     raise
 
-        ledger_bal_tag = stmt_ofx.find('ledgerbal')
-        if hasattr(ledger_bal_tag, "contents"):
-            balamt_tag = ledger_bal_tag.find('balamt')
-            if hasattr(balamt_tag, "contents"):
-                try:
-                    statement.balance = decimal.Decimal(
-                        balamt_tag.contents[0].strip())
-                except (IndexError, decimal.InvalidOperation):
-                    ex = sys.exc_info()[1]
-                    statement.warnings.append(
-                        six.u("Ledger balance amount was empty for %s") % stmt_ofx)
-                    if cls_.fail_fast:
-                        raise OfxParserException("Empty ledger balance")
+        cls_.parseBalance(statement, stmt_ofx, 'ledgerbal', 'balance', 'balance_date', 'ledger')
 
-        avail_bal_tag = stmt_ofx.find('availbal')
-        if hasattr(avail_bal_tag, "contents"):
-            balamt_tag = avail_bal_tag.find('balamt')
-            if hasattr(balamt_tag, "contents"):
-                try:
-                    statement.available_balance = decimal.Decimal(
-                        balamt_tag.contents[0].strip())
-                except (IndexError, decimal.InvalidOperation):
-                    ex = sys.exc_info()[1]
-                    msg = six.u("Available balance amount was empty for %s")
-                    statement.warnings.append(msg % stmt_ofx)
-                    if cls_.fail_fast:
-                        raise OfxParserException("Empty available balance")
+        cls_.parseBalance(statement, stmt_ofx, 'availbal', 'available_balance', 'available_balance_date', 'ledger')
 
         for transaction_ofx in stmt_ofx.findAll('stmttrn'):
             try:
