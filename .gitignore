@@ -5,3 +5,5 @@ ofxparse.egg-info/
 build/
 dist/
 nbproject/
+.coverage
+htmlcov
