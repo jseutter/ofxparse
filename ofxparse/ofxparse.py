@@ -22,13 +22,37 @@ else:
 
 from . import mcc
 
+
+def skip_headers(fh):
+    '''
+    Prepare `fh` for parsing by BeautifulSoup by skipping its OFX
+    headers.
+    '''
+    if fh is None or isinstance(fh, six.string_types):
+        return
+    fh.seek(0)
+    header_re = re.compile(r"^\s*\w+:\s*\w+\s*$")
+    while True:
+        pos = fh.tell()
+        line = fh.readline()
+        if not line:
+            break
+        if header_re.search(line) is None:
+            fh.seek(pos)
+            return
+
+
 def soup_maker(fh):
+    skip_headers(fh)
     try:
         from bs4 import BeautifulSoup
-        return BeautifulSoup(fh)
+        soup = BeautifulSoup(fh, "xml")
+        for tag in soup.findAll():
+            tag.name = tag.name.lower()
     except ImportError:
         from BeautifulSoup import BeautifulStoneSoup
-        return BeautifulStoneSoup(fh)
+        soup = BeautifulStoneSoup(fh)
+    return soup
 
 
 def try_decode(string, encoding):
@@ -332,6 +356,7 @@ class OfxParser(object):
         ofx_obj.accounts = []
         ofx_obj.signon = None
 
+        skip_headers(ofx_file.fh)
         ofx = soup_maker(ofx_file.fh)
         if len(ofx.contents) == 0:
             raise OfxParserException('The ofx file is empty!')
