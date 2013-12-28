@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 
-from ofxparse.ofxparse import soup_maker
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest import TestCase
 import sys
-sys.path.append('..')
+sys.path.insert(0, os.path.abspath('..'))
 
 import six
 
 from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException
+from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
 
 class TestOfxPreprocessedFile(TestCase):
 
