@@ -334,7 +334,7 @@ class OfxParser(object):
         ofx_obj.signon = None
 
         ofx = soup_maker(ofx_file.fh)
-        if len(ofx.contents) == 0:
+        if ofx.find('ofx') is None:
             raise OfxParserException('The ofx file is empty!')
 
         sonrs_ofx = ofx.find('sonrs')
