@@ -452,14 +452,20 @@ class OfxParser(object):
 
         timeZoneOffset = datetime.timedelta(hours=tz)
 
+        res = re.search("\.([0-9]{0,5})", ofxDateTime[14:])
+        if res:
+            msec = datetime.timedelta(seconds=float("0." + res.group(1)))
+        else:
+            msec = datetime.timedelta(seconds=0)
+
         try:
             local_date = datetime.datetime.strptime(
                 ofxDateTime[:14], '%Y%m%d%H%M%S'
             )
-            return local_date - timeZoneOffset
+            return local_date - timeZoneOffset + msec
         except:
             return datetime.datetime.strptime(
-                ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
+                ofxDateTime[:8], '%Y%m%d') - timeZoneOffset + msec
 
     @classmethod
     def parseAcctinfors(cls_, acctinfors_ofx, ofx):
