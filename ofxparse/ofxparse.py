@@ -345,8 +345,9 @@ class OfxParser(object):
         '''
         cls_.fail_fast = fail_fast
 
-        if isinstance(file_handle, type('')):
-            raise RuntimeError(six.u("parse() takes in a file handle, not a string"))
+        if not hasattr(file_handle, 'seek'):
+            raise TypeError(six.u('parse() accepts a seek-able file handle, not %s'
+                    % type(file_handle).__name__))
 
         ofx_obj = Ofx()
 
@@ -358,7 +359,7 @@ class OfxParser(object):
 
         skip_headers(ofx_file.fh)
         ofx = soup_maker(ofx_file.fh)
-        if len(ofx.contents) == 0:
+        if ofx.find('ofx') is None:
             raise OfxParserException('The ofx file is empty!')
 
         sonrs_ofx = ofx.find('sonrs')

@@ -219,7 +219,7 @@ class TestParse(TestCase):
 
     def testThatParseFailsIfAPathIsPassedIn(self):
         # A file handle should be passed in, not the path.
-        self.assertRaises(RuntimeError, OfxParser.parse, '/foo/bar')
+        self.assertRaises(TypeError, OfxParser.parse, '/foo/bar')
 
     def testThatParseReturnsAResultWithABankAccount(self):
         ofx = OfxParser.parse(open_file('bank_medium.ofx'))
