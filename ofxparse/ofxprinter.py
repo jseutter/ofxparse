@@ -19,32 +19,96 @@ class OfxPrinter():
         strdt = dt.strftime('%Y%m%d%H%M%S')
         strdt_msec = dt.strftime('%f')
         if len(strdt_msec) < msec_digs:
-          strdt_msec += ('0' * (msec_digs - len(strdt_msec)))
+            strdt_msec += ('0' * (msec_digs - len(strdt_msec)))
         elif len(strdt_msec) > msec_digs:
-          strdt_msec = strdt_msec[:msec_digs]
+            strdt_msec = strdt_msec[:msec_digs]
         return strdt + '.' + strdt_msec
-    
+
+    def writeTrn(self, ofh, trn):
+        ofh.write("\t\t\t\t\t<STMTTRN>\r\n")
+        ofh.write("\t\t\t\t\t\t<TRNTYPE>{}\r\n".format(
+            trn.type.upper()
+        ))
+        ofh.write("\t\t\t\t\t\t<DTPOSTED>{}\r\n".format(
+            self.printDate(trn.date)
+        ))
+        ofh.write("\t\t\t\t\t\t<TRNAMT>{0:.2f}\r\n".format(
+            float(trn.amount)
+        ))
+
+        ofh.write("\t\t\t\t\t\t<FITID>{}\r\n".format(
+            trn.id
+        ))
+
+        if trn.checknum:
+            ofh.write("\t\t\t\t\t\t<CHECKNUM>{}\r\n".format(
+                trn.checknum
+            ))
+
+        ofh.write("\t\t\t\t\t\t<NAME>{}\r\n".format(
+            trn.payee
+        ))
+
+        if trn.memo.strip():
+            ofh.write("\t\t\t\t\t\t<MEMO>{}\r\n".format(
+                trn.memo
+            ))
+
+        ofh.write("\t\t\t\t\t</STMTTRN>\r\n")
+
+    def writeLedgerBal(self, ofh, statement):
+        bal = getattr(statement, 'balance')
+        baldt = getattr(statement, 'balance_date')
+
+        if bal and baldt:
+            ofh.write("\t\t\t\t<LEDGERBAL>\r\n")
+            ofh.write("\t\t\t\t\t<BALAMT>{0:.2f}\r\n".format(
+                float(bal)
+            ))
+            ofh.write("\t\t\t\t\t<DTASOF>{0}\r\n".format(
+                self.printDate(baldt)
+            ))
+            ofh.write("\t\t\t\t</LEDGERBAL>\r\n")
+
+    def writeAvailBal(self, ofh, statement):
+        bal = getattr(statement, 'available_balance')
+        baldt = getattr(statement, 'available_balance_date')
+
+        if bal and baldt:
+            ofh.write("\t\t\t\t<AVAILBAL>\r\n")
+            ofh.write("\t\t\t\t\t<BALAMT>{0:.2f}\r\n".format(
+                float(bal)
+            ))
+            ofh.write("\t\t\t\t\t<DTASOF>{0}\r\n".format(
+                self.printDate(baldt)
+            ))
+            ofh.write("\t\t\t\t</AVAILBAL>\r\n")
+
     def writeStmTrs(self, ofh):
         for acct in self.ofx.accounts:
             ofh.write("\t\t\t<STMTRS>\r\n")
+
             if acct.curdef:
                 ofh.write("\t\t\t\t<CURDEF>{0}\r\n".format(
                     acct.curdef
                 ))
-            ofh.write("\t\t\t\t<BANKACCTFROM>\r\n")
-            if acct.routing_number:
-                ofh.write("\t\t\t\t\t<BANKID>{0}\r\n".format(
-                    acct.routing_number
-                ))
-            if acct.account_id:
-                ofh.write("\t\t\t\t\t<ACCTID>{0}\r\n".format(
-                    acct.account_id
-                ))
-            if acct.account_type:
-                ofh.write("\t\t\t\t\t<ACCTTYPE>{0}\r\n".format(
-                    acct.account_type
-                ))
-            ofh.write("\t\t\t\t</BANKACCTFROM>\r\n")
+
+            if acct.routing_number or acct.account_id or acct.account_type:
+                ofh.write("\t\t\t\t<BANKACCTFROM>\r\n")
+                if acct.routing_number:
+                    ofh.write("\t\t\t\t\t<BANKID>{0}\r\n".format(
+                        acct.routing_number
+                    ))
+                if acct.account_id:
+                    ofh.write("\t\t\t\t\t<ACCTID>{0}\r\n".format(
+                        acct.account_id
+                    ))
+                if acct.account_type:
+                    ofh.write("\t\t\t\t\t<ACCTTYPE>{0}\r\n".format(
+                        acct.account_type
+                    ))
+                ofh.write("\t\t\t\t</BANKACCTFROM>\r\n")
+
             ofh.write("\t\t\t\t<BANKTRANLIST>\r\n")
             ofh.write("\t\t\t\t\t<DTSTART>{0}\r\n".format(
                 self.printDate(acct.statement.start_date)
@@ -52,58 +116,15 @@ class OfxPrinter():
             ofh.write("\t\t\t\t\t<DTEND>{0}\r\n".format(
                 self.printDate(acct.statement.end_date)
             ))
+
             for trn in acct.statement.transactions:
-                ofh.write("\t\t\t\t\t<STMTTRN>\r\n")
-                ofh.write("\t\t\t\t\t\t<TRNTYPE>{}\r\n".format(
-                  trn.type.upper()
-                ))
-                ofh.write("\t\t\t\t\t\t<DTPOSTED>{}\r\n".format(
-                  self.printDate(trn.date)
-                ))
-                ofh.write("\t\t\t\t\t\t<TRNAMT>{0:.2f}\r\n".format(
-                  float(trn.amount)
-                ))
- 
-                ofh.write("\t\t\t\t\t\t<FITID>{}\r\n".format(
-                  trn.id
-                ))
-
-                if trn.checknum:
-                  ofh.write("\t\t\t\t\t\t<CHECKNUM>{}\r\n".format(
-                    trn.checknum
-                  ))
-
-                ofh.write("\t\t\t\t\t\t<NAME>{}\r\n".format(
-                  trn.payee
-                ))
-
-                ofh.write("\t\t\t\t\t\t<MEMO>{}\r\n".format(
-                  trn.memo
-                ))
-
-                ofh.write("\t\t\t\t\t</STMTTRN>\r\n")
+                self.writeTrn(ofh, trn)
 
             ofh.write("\t\t\t\t</BANKTRANLIST>\r\n")
-            ofh.write("\t\t\t\t<LEDGERBAL>\r\n")
-            ofh.write("\t\t\t\t\t<BALAMT>{0:.2f}\r\n".format(
-              float(getattr(acct.statement, 'balance'))
-            ))
-            ofh.write("\t\t\t\t\t<DTASOF>{0}\r\n".format(
-              self.printDate(
-                getattr(acct.statement, 'balance_date')
-              )
-            ))
-            ofh.write("\t\t\t\t</LEDGERBAL>\r\n")
-            ofh.write("\t\t\t\t<AVAILBAL>\r\n")
-            ofh.write("\t\t\t\t\t<BALAMT>{0:.2f}\r\n".format(
-              float(getattr(acct.statement, 'available_balance'))
-            ))
-            ofh.write("\t\t\t\t\t<DTASOF>{0}\r\n".format(
-              self.printDate(
-                getattr(acct.statement, 'available_balance_date')
-              )
-            ))
-            ofh.write("\t\t\t\t</AVAILBAL>\r\n")
+
+            self.writeLedgerBal(ofh, acct.statement)
+            self.writeAvailBal(ofh, acct.statement)
+
             ofh.write("\t\t\t</STMTRS>\r\n")
 
     def writeBankMsgsRsv1(self, ofh):
