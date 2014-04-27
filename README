@@ -44,15 +44,22 @@ Prerequisites::
 (Ubuntu) sudo apt-get install python-beautifulsoup python-nose python-coverage-test-runner
 (pip) pip install BeautifulSoup nose coverage
 
+The `six` package is required for python 2.X
+
 Tests::
-Simply running the "nose" command should run the tests.  If you don't have nose
-installed, the following might also work:
+Simply running the "nosetests" command should run the tests.  If you don't have
+nose installed, the following might also work:
 
   python -m unittest tests.test_parse
 
 Test Coverage Report::
 
   coverage run -m unittest tests.test_parse
+  
+  # text report
+  coverage report
+
+  # html report
   coverage html
   firefox htmlcov/index.html
 
