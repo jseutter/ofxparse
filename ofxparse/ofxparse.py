@@ -392,19 +392,19 @@ class OfxParser(object):
             ofx_obj.signon = cls_.parseSonrs(sonrs_ofx)
 
         stmttrnrs = ofx.find('stmttrnrs')
+        if stmttrnrs:
+            stmttrnrs_trnuid = stmttrnrs.find('trnuid')
+            if stmttrnrs_trnuid:
+                ofx_obj.trnuid = stmttrnrs_trnuid.contents[0].strip()
 
-        stmttrnrs_trnuid = stmttrnrs.find('trnuid')
-        if stmttrnrs_trnuid:
-            ofx_obj.trnuid = stmttrnrs_trnuid.contents[0].strip()
-
-        stmttrnrs_status = stmttrnrs.find('status')
-        if stmttrnrs_status:
-            ofx_obj.status = {}
-            ofx_obj.status['code'] = int(
-                stmttrnrs_status.find('code').contents[0].strip()
-            )
-            ofx_obj.status['severity'] = \
-                stmttrnrs_status.find('severity').contents[0].strip()
+            stmttrnrs_status = stmttrnrs.find('status')
+            if stmttrnrs_status:
+                ofx_obj.status = {}
+                ofx_obj.status['code'] = int(
+                    stmttrnrs_status.find('code').contents[0].strip()
+                )
+                ofx_obj.status['severity'] = \
+                    stmttrnrs_status.find('severity').contents[0].strip()
 
         stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
@@ -452,7 +452,7 @@ class OfxParser(object):
 
         timeZoneOffset = datetime.timedelta(hours=tz)
 
-        res = re.search("\.([0-9]{0,5})", ofxDateTime[14:])
+        res = re.search("^[0-9]*\.([0-9]{0,5})", ofxDateTime)
         if res:
             msec = datetime.timedelta(seconds=float("0." + res.group(1)))
         else:
