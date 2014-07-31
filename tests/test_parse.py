@@ -13,6 +13,7 @@ from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
 
+
 class TestOfxPreprocessedFile(TestCase):
 
     def testPreprocess(self):
@@ -41,8 +42,8 @@ NEWFILEUID:NONE
 <OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE></DTASOF><VAL.UE>a</VAL.UE><VAL_UE>b</VAL_UE><TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net</NAME><DTASOF>2222</DTASOF></BAL><BAL><NAME>Gross</NAME><DTASOF>3333</DTASOF></BAL></BALLIST></INVBAL></OFX>
 """
         ofx_file = OfxPreprocessedFile(fh)
-        data     = ofx_file.fh.read()
-        self.assertEqual(data,expect)
+        data = ofx_file.fh.read()
+        self.assertEqual(data, expect)
 
     def testHeaders(self):
         expect = {"OFXHEADER": six.u("100"),
@@ -122,7 +123,6 @@ NEWFILEUID:NONE
         fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
         ofx_file = OfxPreprocessedFile(fh)
         self.assertEquals(len(ofx_file.headers.keys()), 2)
-
 
 
 class TestOfxFile(TestCase):
@@ -232,7 +232,7 @@ class TestParse(TestCase):
         self.assertEquals('00', ofx.account.branch_id)
         self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
-        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), 
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
                           ofx.account.statement.balance_date)
         # Todo: support values in decimal or int form.
         # self.assertEquals('15',
@@ -240,7 +240,7 @@ class TestParse(TestCase):
         self.assertEquals(
             Decimal('682.34'), ofx.account.statement.available_balance)
         self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
-            ofx.account.statement.available_balance_date)
+                          ofx.account.statement.available_balance_date)
         self.assertEquals(
             datetime(2009, 4, 1), ofx.account.statement.start_date)
         self.assertEquals(
@@ -426,7 +426,6 @@ class TestParseTransaction(TestCase):
         self.assertEquals("MCDONALD'S #112", transaction.payee)
         self.assertEquals("POS MERCHANDISE;MCDONALD'S #112", transaction.memo)
 
-
     def testThatParseTransactionWithFieldCheckNum(self):
         input = '''
 <STMTTRN>
@@ -441,6 +440,7 @@ class TestParseTransaction(TestCase):
         txn = soup_maker(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('700', transaction.checknum)
+
 
 class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
@@ -477,7 +477,6 @@ class TestInvestmentAccount(TestCase):
     def testThatParseCanCreateAnInvestmentAccount(self):
         OfxParser.parse(six.BytesIO(six.b(self.sample)))
         # Success!
-
 
 
 class TestVanguardInvestmentStatement(TestCase):
@@ -617,6 +616,7 @@ class TestGracefulFailures(TestCase):
         # Test that it raises an error otherwise.
         self.assertRaises(OfxParserException, OfxParser.parse,
                           open_file('fail_nice/empty_balance.ofx'))
+
 
 class TestParseSonrs(TestCase):
 
