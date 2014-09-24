@@ -418,6 +418,9 @@ class OfxParser(object):
             )
             return local_date - timeZoneOffset
         except:
+            if ofxDateTime[:8] == "00000000":
+                return None
+
             return datetime.datetime.strptime(
                 ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
 

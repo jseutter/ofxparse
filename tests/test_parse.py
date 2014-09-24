@@ -232,7 +232,7 @@ class TestParse(TestCase):
         self.assertEquals('00', ofx.account.branch_id)
         self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
-        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), 
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
                           ofx.account.statement.balance_date)
         # Todo: support values in decimal or int form.
         # self.assertEquals('15',
@@ -275,10 +275,13 @@ class TestStringToDate(TestCase):
         self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
 
         bad_but_close_string = '881103'
-        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_but_close_string)
 
         no_month_string = '19881301'
-        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, bad_string)
+        self.assertRaises(ValueError, OfxParser.parseOfxDateTime, no_month_string)
+
+    def test_returns_none(self):
+        self.assertIsNone(OfxParser.parseOfxDateTime('00000000'))
 
     def test_parses_correct_time(self):
         '''Test whether it can parse correct time for some valid time fields'''
@@ -395,6 +398,54 @@ class TestParseStatement(TestCase):
         self.assertEquals(Decimal('682.34'), statement.available_balance)
         self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), statement.available_balance_date)
 
+    def testThatParseStatementWithBlankDatesReturnsAStatement(self):
+        input = '''
+<STMTTRNRS>
+ <TRNUID>20090523122017
+ <STATUS>
+  <CODE>0
+  <SEVERITY>INFO
+  <MESSAGE>OK
+ </STATUS>
+ <STMTRS>
+  <CURDEF>CAD
+  <BANKACCTFROM>
+   <BANKID>160000100
+   <ACCTID>12300 000012345678
+   <ACCTTYPE>CHECKING
+  </BANKACCTFROM>
+  <BANKTRANLIST>
+   <DTSTART>00000000
+   <DTEND>00000000
+   <STMTTRN>
+    <TRNTYPE>POS
+    <DTPOSTED>20090401122017.000[-5:EST]
+    <TRNAMT>-6.60
+    <FITID>0000123456782009040100001
+    <NAME>MCDONALD'S #112
+    <MEMO>POS MERCHANDISE;MCDONALD'S #112
+   </STMTTRN>
+  </BANKTRANLIST>
+  <LEDGERBAL>
+   <BALAMT>382.34
+   <DTASOF>20090523122017
+  </LEDGERBAL>
+  <AVAILBAL>
+   <BALAMT>682.34
+   <DTASOF>20090523122017
+  </AVAILBAL>
+ </STMTRS>
+</STMTTRNRS>
+        '''
+        txn = soup_maker(input)
+        statement = OfxParser.parseStatement(txn.find('stmttrnrs'))
+        self.assertEquals(None, statement.start_date)
+        self.assertEquals(None, statement.end_date)
+        self.assertEquals(1, len(statement.transactions))
+        self.assertEquals(Decimal('382.34'), statement.balance)
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), statement.balance_date)
+        self.assertEquals(Decimal('682.34'), statement.available_balance)
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), statement.available_balance_date)
 
 class TestStatement(TestCase):
     def testThatANewStatementIsValid(self):
