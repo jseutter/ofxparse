@@ -477,7 +477,6 @@ class TestParseTransaction(TestCase):
         self.assertEquals("MCDONALD'S #112", transaction.payee)
         self.assertEquals("POS MERCHANDISE;MCDONALD'S #112", transaction.memo)
 
-
     def testThatParseTransactionWithFieldCheckNum(self):
         input = '''
 <STMTTRN>
@@ -492,6 +491,31 @@ class TestParseTransaction(TestCase):
         txn = soup_maker(input)
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('700', transaction.checknum)
+
+    def testThatParseTransactionWithNullAmountIgnored(self):
+        """A null transaction value is converted to 0.
+
+        Some banks use a null transaction to include interest
+        rate changes on statements.
+        """
+        input_template = '''
+<STMTTRN>
+ <TRNTYPE>DEP
+ <DTPOSTED>20130306
+ <TRNAMT>{amount}
+ <FITID>2013030601009100
+ <CHECKNUM>700
+ <MEMO>DEPOSITO ONLINE
+</STMTTRN>
+'''
+        for amount in ("null", "-null"):
+            input = input_template.format(amount=amount)
+            txn = soup_maker(input)
+
+            transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+
+            self.assertEquals(0, transaction.amount)
+
 
 class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
