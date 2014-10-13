@@ -296,10 +296,10 @@ class Transaction(object):
 
 
 class InvestmentTransaction(object):
-    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock) = [x for x in range(-1, 5)]
+    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock, Transfer) = [x for x in range(-1, 6)]
     def __init__(self, type):
         try:
-            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock'].index(type.lower())
+            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock', 'transfer'].index(type.lower())
         except ValueError:
             self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
@@ -612,7 +612,7 @@ class OfxParser(object):
                 )
 
         for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
-                                 'sellstock', 'buyopt', 'sellopt']:
+                                 'sellstock', 'buyopt', 'sellopt', 'transfer']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
