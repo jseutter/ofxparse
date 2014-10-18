@@ -503,6 +503,19 @@ class TestVanguardInvestmentStatement(TestCase):
         self.assertEquals(len(ofx.security_list), 2)
 
 
+class TestVanguard401kStatement(TestCase):
+    def testReadTransfer(self):
+        ofx = OfxParser.parse(open_file('vanguard401k.ofx'))
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEquals(len(ofx.account.statement.transactions), 5)
+        self.assertEquals(ofx.account.statement.transactions[-1].id,
+                          '1234567890123456795AAA')
+        self.assertEquals(ofx.account.statement.transactions[-1].type,
+                          ofx.account.statement.transactions[-1].Transfer)
+
+
 class TestFidelityInvestmentStatement(TestCase):
     def testForUnclosedTags(self):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
