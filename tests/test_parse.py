@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath('..'))
 import six
 
 from .support import open_file
-from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
+from ofxparse import OfxParser, AccountType, Account, Statement, Transaction, InvestmentTransaction
 from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
 
 class TestOfxPreprocessedFile(TestCase):
@@ -515,6 +515,25 @@ class TestFidelityInvestmentStatement(TestCase):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
         self.assertEquals(len(ofx.security_list), 7)
 
+class TestFidelityBrokerageStatement(TestCase):
+    def testBasicStatement(self):
+        ofx = OfxParser.parse(open_file('fidelity-brokerage.ofx'))
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEqual(len(ofx.account.statement.transactions), 4)
+        self.assertEqual(
+            ofx.account.statement.transactions[0].units, Decimal('50.0'))
+        self.assertEqual(ofx.account.statement.transactions[0].type,
+            InvestmentTransaction.BuyMF)
+        self.assertEqual(ofx.account.statement.transactions[1].type,
+            InvestmentTransaction.SellMF)
+        self.assertEqual(ofx.account.statement.transactions[2].amount,
+            Decimal('50'))
+        self.assertEqual(ofx.account.statement.transactions[2].type, 'dep')
+        self.assertEqual(ofx.account.statement.transactions[2].date, datetime(2015, 2, 25) - timedelta(hours=-4))
+        self.assertEqual(ofx.account.statement.transactions[3].amount,
+            Decimal('-50.01'))
+        self.assertEqual(ofx.account.statement.transactions[3].type, 'cash')
+        self.assertEqual(ofx.account.statement.transactions[3].date, datetime(2015, 3, 6) - timedelta(hours=-4))
 
 class TestSuncorpBankStatement(TestCase):
     def testCDATATransactions(self):

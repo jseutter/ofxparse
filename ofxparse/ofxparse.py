@@ -626,6 +626,20 @@ class OfxParser(object):
                      six.u('content'): investment_ofx}
                 )
 
+        for investment_ofx in invstmtrs_ofx.findAll("invbanktran"):
+            try:
+                tag = investment_ofx.find('stmttrn')
+                if (hasattr(tag, 'contents')):
+                    statement.transactions.append(cls_.parseTransaction(tag))
+            except (ValueError, IndexError, decimal.InvalidOperation):
+                e = sys.exc_info()[1]
+                if cls_.fail_fast:
+                    raise
+                statement.discarded_entries.append(
+                    {six.u('error'): transaction_type + ": " + str(e),
+                     six.u('content'): investment_ofx}
+                )
+
         return statement
 
     @classmethod
