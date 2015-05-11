@@ -1,3 +1,6 @@
+
+import codecs
+import os
 import re
 import sys
 
@@ -28,12 +31,17 @@ REQUIRES.extend([
     'six',
 ])
 
+README = os.path.join(os.path.dirname(__file__), 'README.rst')
+
+with codecs.open(README, encoding='utf8') as f:
+    LONG_DESCRIPTION = f.read()
+
 setup_params = dict(
     name='ofxparse',
     version=VERSION,
     description=("Tools for working with the OFX (Open Financial Exchange)"
                  " file format"),
-    long_description=open("./README", "r").read(),
+    long_description=LONG_DESCRIPTION,
     # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Development Status :: 4 - Beta",
