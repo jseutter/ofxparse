@@ -296,15 +296,16 @@ class Transaction(object):
 
 
 class InvestmentTransaction(object):
-    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock) = [x for x in range(-1, 5)]
+    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock, Income) = [x for x in range(-1, 6)]
     def __init__(self, type):
         try:
-            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock'].index(type.lower())
+            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock', 'income'].index(type.lower())
         except ValueError:
             self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
         self.settleDate = None
         self.security = ''
+        self.income_type = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
 
@@ -552,6 +553,9 @@ class OfxParser(object):
         tag = ofx.find('uniqueid')
         if (hasattr(tag, 'contents')):
             transaction.security = tag.contents[0].strip()
+        tag = ofx.find('incometype')
+        if (hasattr(tag, 'contents')):
+            transaction.income_type = tag.contents[0].strip()
         tag = ofx.find('units')
         if (hasattr(tag, 'contents')):
             transaction.units = decimal.Decimal(tag.contents[0].strip())
@@ -612,7 +616,7 @@ class OfxParser(object):
                 )
 
         for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
-                                 'sellstock', 'buyopt', 'sellopt']:
+                                 'sellstock', 'income', 'buyopt', 'sellopt']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
