@@ -304,6 +304,7 @@ class InvestmentTransaction(object):
             self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
         self.settleDate = None
+        self.memo = ''
         self.security = ''
         self.income_type = ''
         self.units = decimal.Decimal(0)
