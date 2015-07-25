@@ -309,6 +309,9 @@ class InvestmentTransaction(object):
         self.income_type = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
+        self.commission = decimal.Decimal(0)
+        self.fees = decimal.Decimal(0)
+        self.total = decimal.Decimal(0)
 
     def __repr__(self):
         return "<InvestmentTransaction type=" + str(self.type) + ", units=" + str(self.units) + ">"
@@ -563,6 +566,15 @@ class OfxParser(object):
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
             transaction.unit_price = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('commission')
+        if (hasattr(tag, 'contents')):
+            transaction.commission = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('fees')
+        if (hasattr(tag, 'contents')):
+            transaction.fees = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('total')
+        if (hasattr(tag, 'contents')):
+            transaction.total = decimal.Decimal(tag.contents[0].strip())
         return transaction
 
     @classmethod
