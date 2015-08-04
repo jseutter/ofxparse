@@ -2,18 +2,27 @@ from ofxparse import OfxParser
 import pandas as pd
 
 import argparse
+
+# TODO automatically extract from transactions
+fields = ['id','type', 'date', 'memo', 'payee', 'amount', 'checknum', 'mcc']
+
 parser = argparse.ArgumentParser(description='Convert multiple .qfx or .ofx to'
-                                             ' .xlsx, remove duplicate'
-                                             ' transactions.')
-parser.add_argument('files', metavar='INPUT-Q/OFX-FILE', type=str, nargs='+',
+                                             ' .xlsx.\n'
+                                             'Remove duplicate transactions '
+                                             'from different files.\n'
+                                             'use fixed columns:'
+                                             ' %s'%', '.join(fields))
+parser.add_argument('files', metavar='*.ofx *.qfx', type=str, nargs='+',
                    help='.qfx or .ofx file names')
-parser.add_argument('--start', type=str, metavar='START-DATE',
+parser.add_argument('--start', type=str, metavar='2014-01-01',
+                    default='2014-01-01',
                    help="Don't take transaction before this date")
-parser.add_argument('--end', type=str, metavar='END-DATE',
-                   help="Don't take transaction after this date")
-parser.add_argument('--output', metavar='XLSX-FILE', type=str,
+parser.add_argument('--end', type=str, metavar='2014-12-31',
+                    default='2014-12-31',
+                    help="Don't take transaction after this date")
+parser.add_argument('--output', metavar='output.xlsx', type=str,
                     default='output.xlsx', help='Were to store the xlsx')
-parser.add_argument('--id-length', metavar='N', type=int, default=24,
+parser.add_argument('--id-length', metavar='24', type=int, default=24,
                    help='Truncate the number of digits in a transaction ID.'
                         ' This is important because this program remove'
                         ' transactions with duplicate IDs (after verifing'
@@ -27,8 +36,6 @@ parser.add_argument('--id-length', metavar='N', type=int, default=24,
 
 args = parser.parse_args()
 
-# TODO automatically extract from transactions
-fields = ['id','type', 'date', 'memo', 'payee', 'amount', 'checknum', 'mcc']
 
 data = {}
 for fname in args.files:
