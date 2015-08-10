@@ -211,6 +211,7 @@ class AccountType(object):
 
 class Account(object):
     def __init__(self):
+        self.curdef = None
         self.statement = None
         self.account_id = ''
         self.routing_number = ''
@@ -241,11 +242,18 @@ class Security:
         self.memo = memo
 
 class Signon:
-    def __init__(self, code, severity, message):
-        self.code = code
-        self.severity = severity
-        self.message = message
-        if int(code) == 0:
+    def __init__(self, keys):
+        self.code = keys['code']
+        self.severity = keys['severity']
+        self.message = keys['message']
+        self.dtserver = keys['dtserver']
+        self.language = keys['language']
+        self.dtprofup = keys['dtprofup']
+        self.fi_org = keys['org']
+        self.fi_fid = keys['fid']
+        self.intu_bid = keys['intu.bid']
+
+        if int(self.code) == 0:
             self.success = True
         else:
             self.success = False
@@ -256,7 +264,24 @@ class Signon:
         ret += "\t\t\t\t<SEVERITY>%s\r\n" % self.severity
         if self.message:
             ret += "\t\t\t\t<MESSAGE>%s\r\n" % self.message
-        ret += "\t\t\t</STATUS>\r\n" + "\t\t</SONRS>\r\n" + "\t</SIGNONMSGSRSV1>\r\n"
+        ret += "\t\t\t</STATUS>\r\n"
+        if self.dtserver is not None:
+            ret += "\t\t\t<DTSERVER>" + self.dtserver + "\r\n"
+        if self.language is not None:
+            ret += "\t\t\t<LANGUAGE>" + self.language + "\r\n"
+        if self.dtprofup is not None:
+            ret += "\t\t\t<DTPROFUP>" + self.dtprofup + "\r\n"
+        if (self.fi_org is not None) or (self.fi_fid is not None):
+            ret += "\t\t\t<FI>\r\n"
+            if self.fi_org is not None:
+                ret += "\t\t\t\t<ORG>" + self.fi_org + "\r\n"
+            if self.fi_fid is not None:
+                ret += "\t\t\t\t<FID>" + self.fi_fid + "\r\n"
+            ret += "\t\t\t</FI>\r\n"
+        if self.intu_bid is not None:
+            ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
+        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
 class Statement(object):
@@ -366,6 +391,21 @@ class OfxParser(object):
         if sonrs_ofx:
             ofx_obj.signon = cls_.parseSonrs(sonrs_ofx)
 
+        stmttrnrs = ofx.find('stmttrnrs')
+        if stmttrnrs:
+            stmttrnrs_trnuid = stmttrnrs.find('trnuid')
+            if stmttrnrs_trnuid:
+                ofx_obj.trnuid = stmttrnrs_trnuid.contents[0].strip()
+
+            stmttrnrs_status = stmttrnrs.find('status')
+            if stmttrnrs_status:
+                ofx_obj.status = {}
+                ofx_obj.status['code'] = int(
+                    stmttrnrs_status.find('code').contents[0].strip()
+                )
+                ofx_obj.status['severity'] = \
+                    stmttrnrs_status.find('severity').contents[0].strip()
+
         stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
             ofx_obj.accounts += cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
@@ -412,14 +452,20 @@ class OfxParser(object):
 
         timeZoneOffset = datetime.timedelta(hours=tz)
 
+        res = re.search("^[0-9]*\.([0-9]{0,5})", ofxDateTime)
+        if res:
+            msec = datetime.timedelta(seconds=float("0." + res.group(1)))
+        else:
+            msec = datetime.timedelta(seconds=0)
+
         try:
             local_date = datetime.datetime.strptime(
                 ofxDateTime[:14], '%Y%m%d%H%M%S'
             )
-            return local_date - timeZoneOffset
+            return local_date - timeZoneOffset + msec
         except:
             return datetime.datetime.strptime(
-                ofxDateTime[:8], '%Y%m%d') - timeZoneOffset
+                ofxDateTime[:8], '%Y%m%d') - timeZoneOffset + msec
 
     @classmethod
     def parseAcctinfors(cls_, acctinfors_ofx, ofx):
@@ -644,14 +690,28 @@ class OfxParser(object):
     @classmethod
     def parseSonrs(cls_, sonrs):
 
-        code     = int(sonrs.find('code').contents[0].strip())
-        severity = sonrs.find('severity').contents[0].strip()
-        try:
-            message = sonrs.find('message').contents[0].strip()
-        except:
-            message = ''
+        items = [
+            'code',
+            'severity',
+            'dtserver',
+            'language',
+            'dtprofup',
+            'org',
+            'fid',
+            'intu.bid',
+            'message'
+        ]
+        idict = {}
+        for i in items:
+            try:
+                idict[i] = sonrs.find(i).contents[0].strip()
+            except:
+                idict[i] = None
+        idict['code'] = int(idict['code'])
+        if idict['message'] is None:
+            idict['message'] = ''
 
-        return Signon(code,severity,message)
+        return Signon(idict)
 
     @classmethod
     def parseStmtrs(cls_, stmtrs_list, accountType):
@@ -659,6 +719,9 @@ class OfxParser(object):
         ret = []
         for stmtrs_ofx in stmtrs_list:
             account = Account()
+            act_curdef = stmtrs_ofx.find('curdef')
+            if act_curdef:
+                account.curdef = act_curdef.contents[0].strip()
             acctid_tag = stmtrs_ofx.find('acctid')
             if hasattr(acctid_tag, 'contents'):
                 account.account_id = acctid_tag.contents[0].strip()
