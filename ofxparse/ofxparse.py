@@ -321,10 +321,10 @@ class Transaction(object):
 
 
 class InvestmentTransaction(object):
-    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock, Income) = [x for x in range(-1, 6)]
+    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock, Income, BuyOpt, SellOpt, ClosureOpt) = [x for x in range(-1, 9)]
     def __init__(self, type):
         try:
-            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock', 'income'].index(type.lower())
+            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock', 'income', 'buyopt', 'sellopt', 'closureopt'].index(type.lower())
         except ValueError:
             self.type = InvestmentTransaction.Unknown
         self.tradeDate = None
@@ -337,6 +337,12 @@ class InvestmentTransaction(object):
         self.commission = decimal.Decimal(0)
         self.fees = decimal.Decimal(0)
         self.total = decimal.Decimal(0)
+
+        # Option fields
+        self.shares_per_contract = decimal.Decimal(0)
+        self.opt_action = ''
+        self.opt_buy_type = ''
+        self.opt_sell_type = ''
 
     def __repr__(self):
         return "<InvestmentTransaction type=" + str(self.type) + ", units=" + str(self.units) + ">"
@@ -621,6 +627,18 @@ class OfxParser(object):
         tag = ofx.find('total')
         if (hasattr(tag, 'contents')):
             transaction.total = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('shperctrct')
+        if (hasattr(tag, 'contents')):
+            transaction.shares_per_contract = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('optaction')
+        if (hasattr(tag, 'contents')):
+            transaction.opt_action = tag.contents[0].strip()
+        tag = ofx.find('optbuytype')
+        if (hasattr(tag, 'contents')):
+            transaction.opt_buy_type = tag.contents[0].strip()
+        tag = ofx.find('optselltype')
+        if (hasattr(tag, 'contents')):
+            transaction.opt_sell_type = tag.contents[0].strip()
         return transaction
 
     @classmethod
