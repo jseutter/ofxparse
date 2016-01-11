@@ -280,7 +280,7 @@ class Signon:
             ret += "\t\t\t</FI>\r\n"
         if self.intu_bid is not None:
             ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
-        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t\t</SONRS>\r\n"
         ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
@@ -767,7 +767,7 @@ class OfxParser(object):
             if hasattr(balamt_tag, "contents"):
                 try:
                     setattr(statement, bal_attr, decimal.Decimal(
-                        balamt_tag.contents[0].strip()))
+                        balamt_tag.contents[0].strip().replace(",", ".")))
                 except (IndexError, decimal.InvalidOperation):
                     ex = sys.exc_info()[1]
                     statement.warnings.append(
@@ -902,7 +902,7 @@ class OfxParser(object):
         if hasattr(amt_tag, "contents"):
             try:
                 transaction.amount = decimal.Decimal(
-                    amt_tag.contents[0].strip())
+                    amt_tag.contents[0].strip().replace(",", "."))
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
