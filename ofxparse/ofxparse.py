@@ -321,12 +321,15 @@ class Transaction(object):
 
 
 class InvestmentTransaction(object):
-    (Unknown, BuyMF, SellMF, Reinvest, BuyStock, SellStock, Income) = [x for x in range(-1, 6)]
+    AGGREGATE_TYPES = ['buydebt', 'buymf', 'buyopt', 'buyother',
+                       'buystock', 'closureopt', 'income',
+                       'invexpense', 'jrnlfund', 'jrnlsec',
+                       'margininterest', 'reinvest', 'retofcap',
+                       'selldebt', 'sellmf', 'sellopt', 'sellother',
+                       'sellstock', 'split', 'transfer']
+
     def __init__(self, type):
-        try:
-            self.type = ['buymf', 'sellmf', 'reinvest', 'buystock', 'sellstock', 'income'].index(type.lower())
-        except ValueError:
-            self.type = InvestmentTransaction.Unknown
+        self.type = type.lower()
         self.tradeDate = None
         self.settleDate = None
         self.memo = ''
@@ -674,8 +677,7 @@ class OfxParser(object):
                      six.u('content'): investment_ofx}
                 )
 
-        for transaction_type in ['buymf', 'sellmf', 'reinvest', 'buystock',
-                                 'sellstock', 'income', 'buyopt', 'sellopt']:
+        for transaction_type in InvestmentTransaction.AGGREGATE_TYPES:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.transactions.append(
