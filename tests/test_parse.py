@@ -442,6 +442,36 @@ class TestParseTransaction(TestCase):
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEquals('700', transaction.checknum)
 
+    def testThatParseTransactionWithCommaAsDecimalPoint(self):
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>-1006,60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEquals(Decimal('-1006.60'), transaction.amount)
+
+    def testThatParseTransactionWithCommaAsDecimalPointAndDotAsSeparator(self):
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>-1.006,60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        with self.assertRaises(OfxParserException):
+            transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+
 class TestTransaction(TestCase):
     def testThatAnEmptyTransactionIsValid(self):
         t = Transaction()
