@@ -903,8 +903,10 @@ class OfxParser(object):
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
             try:
-                transaction.amount = decimal.Decimal(
-                    amt_tag.contents[0].strip())
+                contents = amt_tag.contents[0].strip()
+                if '.' not in contents:
+                    contents = contents.replace(',', '.')
+                transaction.amount = decimal.Decimal(contents)
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
