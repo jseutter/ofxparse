@@ -45,8 +45,8 @@ def skip_headers(fh):
 def soup_maker(fh):
     skip_headers(fh)
     try:
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(fh, "xml")
+        from .OFXSoup import BeautifulSoup,OFXParserTreeBuilder
+        soup = BeautifulSoup(fh, builder=OFXParserTreeBuilder() )
         for tag in soup.findAll():
             tag.name = tag.name.lower()
     except ImportError:
