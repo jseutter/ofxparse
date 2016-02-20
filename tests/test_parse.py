@@ -323,7 +323,7 @@ class TestParseStmtrs(TestCase):
     def testThatParseStmtrsReturnsAnAccount(self):
         stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
-            stmtrs.find('stmtrs'), AccountType.Bank)[0]
+            stmtrs.find_all('stmtrs'), AccountType.Bank)[0]
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
         self.assertEquals('CHECKING', account.account_type)
@@ -331,7 +331,7 @@ class TestParseStmtrs(TestCase):
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
-            stmtrs.find('stmtrs'), AccountType.Bank)[0]
+            stmtrs.find_all('stmtrs'), AccountType.Bank)[0]
         self.assertTrue(hasattr(account, 'statement'))
 
 
