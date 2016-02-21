@@ -23,177 +23,12 @@ else:
 from . import mcc
 
 
-def skip_headers(fh):
-    '''
-    Prepare `fh` for parsing by BeautifulSoup by skipping its OFX
-    headers.
-    '''
-    if fh is None or isinstance(fh, six.string_types):
-        return
-    fh.seek(0)
-    header_re = re.compile(r"^\s*\w+:\s*\w+\s*$")
-    while True:
-        pos = fh.tell()
-        line = fh.readline()
-        if not line:
-            break
-        if header_re.search(line) is None:
-            fh.seek(pos)
-            return
-
-
 def soup_maker(fh):
-    skip_headers(fh)
-    try:
-        from .OFXSoup import BeautifulSoup,OFXParserTreeBuilder
-        soup = BeautifulSoup(fh, builder=OFXParserTreeBuilder() )
-        for tag in soup.findAll():
-            tag.name = tag.name.lower()
-    except ImportError:
-        from BeautifulSoup import BeautifulStoneSoup
-        soup = BeautifulStoneSoup(fh)
+    from .OFXSoup import BeautifulSoup,OFXParserTreeBuilder
+    soup = BeautifulSoup(fh, builder=OFXParserTreeBuilder() )
+    for tag in soup.findAll():
+        tag.name = tag.name.lower()
     return soup
-
-
-def try_decode(string, encoding):
-    if hasattr(string, 'decode'):
-        string = string.decode(encoding)
-    return string
-
-def is_iterable(candidate):
-    if sys.version_info < (2,6):
-        return hasattr(candidate, 'next')
-    return isinstance(candidate, collections.Iterable)
-
-@contextlib.contextmanager
-def save_pos(fh):
-    """
-    Save the position of the file handle, seek to the beginning, and
-    then restore the position.
-    """
-    orig_pos = fh.tell()
-    fh.seek(0)
-    try:
-        yield fh
-    finally:
-        fh.seek(orig_pos)
-
-class OfxFile(object):
-    def __init__(self, fh):
-        """
-        fh should be a seekable file-like byte stream object
-        """
-        self.headers = odict.OrderedDict()
-        self.fh = fh
-
-        if not is_iterable(self.fh):
-            return
-        if not hasattr(self.fh, "seek"):
-            return  # fh is not a file object, we're doomed.
-
-        with save_pos(self.fh):
-            self.read_headers()
-            self.handle_encoding()
-            self.replace_NONE_headers()
-
-    def read_headers(self):
-        head_data = self.fh.read(1024 * 10)
-        head_data = head_data[:head_data.find(six.b('<'))]
-
-        for line in re.split(six.b('\r?\n?'), head_data):
-            # Newline?
-            if line.strip() == six.b(""):
-                break
-
-            header, value = line.split(six.b(":"))
-            header, value = header.strip().upper(), value.strip()
-
-            self.headers[header] = value
-
-    def handle_encoding(self):
-        """
-        Decode the headers and wrap self.fh in a decoder such that it
-        subsequently returns only text.
-        """
-        # decode the headers using ascii
-        ascii_headers = odict.OrderedDict(
-            (
-                key.decode('ascii', 'replace'),
-                value.decode('ascii', 'replace'),
-            )
-            for key, value in six.iteritems(self.headers)
-        )
-
-        enc_type = ascii_headers.get('ENCODING')
-
-        if not enc_type:
-            # no encoding specified, use the ascii-decoded headers
-            self.headers = ascii_headers
-            # decode the body as ascii as well
-            self.fh = codecs.lookup('ascii').streamreader(self.fh)
-            return
-
-        if enc_type == "USASCII":
-            cp = ascii_headers.get("CHARSET", "1252")
-            encoding = "cp%s" % (cp, )
-
-        elif enc_type in ("UNICODE", "UTF-8"):
-            encoding = "utf-8"
-
-        codec = codecs.lookup(encoding)
-
-        self.fh = codec.streamreader(self.fh)
-
-        # Decode the headers using the encoding
-        self.headers = odict.OrderedDict(
-            (key.decode(encoding), value.decode(encoding))
-            for key, value in six.iteritems(self.headers)
-        )
-
-    def replace_NONE_headers(self):
-        """
-        Any headers that indicate 'none' should be replaced with Python
-        None values
-        """
-        for header in self.headers:
-            if self.headers[header].upper() == 'NONE':
-                self.headers[header] = None
-
-
-class OfxPreprocessedFile(OfxFile):
-    def __init__(self, fh):
-        super(OfxPreprocessedFile,self).__init__(fh)
-
-        if self.fh is None:
-            return
-
-        ofx_string = self.fh.read()
-
-        # find all closing tags as hints
-        closing_tags = [ t.upper() for t in re.findall(r'(?i)</([a-z0-9_\.]+)>', ofx_string) ]
-
-        # close all tags that don't have closing tags and
-        # leave all other data intact
-        last_open_tag = None
-        tokens        = re.split(r'(?i)(</?[a-z0-9_\.]+>)', ofx_string)
-        new_fh        = StringIO()
-        for idx,token in enumerate(tokens):
-            is_closing_tag = token.startswith('</')
-            is_processing_tag = token.startswith('<?')
-            is_cdata = token.startswith('<!')
-            is_tag = token.startswith('<') and not is_cdata
-            is_open_tag = is_tag and not is_closing_tag and not is_processing_tag
-            if is_tag:
-                if last_open_tag is not None:
-                    new_fh.write("</%s>" % last_open_tag)
-                    last_open_tag = None
-            if is_open_tag:
-                tag_name = re.findall(r'(?i)<([a-z0-9_\.]+)>', token)[0]
-                if tag_name.upper() not in closing_tags:
-                    last_open_tag = tag_name
-            new_fh.write(token)
-        new_fh.seek(0)
-        self.fh = new_fh
 
 
 class Ofx(object):
@@ -280,7 +115,7 @@ class Signon:
             ret += "\t\t\t</FI>\r\n"
         if self.intu_bid is not None:
             ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
-        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t\t</SONRS>\r\n"
         ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
@@ -361,6 +196,27 @@ class Institution(object):
 class OfxParserException(Exception):
     pass
 
+def headers(soup):
+  for content in soup.contents:
+    if content.name <> None:continue #Skip Tags
+    content = content.strip()
+    if content == '':continue #Skip empty navigable strings
+    if content[-1]=='?':
+      content = content[0:-1]
+    content = content.split()
+    if content[0]=='OFX': #v2 ofx
+      content.pop(0)
+      content = [s.split('=') for s in content]
+      content = [[s[0],s[1].strip('"')] for s in content]
+    elif content[0][0:9]=='OFXHEADER': #v1 ofx
+      content = [s.split(':') for s in content]
+    else: continue
+    for s in content:
+      if s[1]=='NONE':
+        s[1]=None
+    headers = collections.OrderedDict([tuple(s) for s in content])
+    return headers
+
 
 class OfxParser(object):
     @classmethod
@@ -384,14 +240,11 @@ class OfxParser(object):
 
         ofx_obj = Ofx()
 
-        # Store the headers
-        ofx_file = OfxPreprocessedFile(file_handle)
-        ofx_obj.headers = ofx_file.headers
         ofx_obj.accounts = []
         ofx_obj.signon = None
-
-        skip_headers(ofx_file.fh)
-        ofx = soup_maker(ofx_file.fh)
+        ofx = soup_maker(file_handle)
+        # Store the headers
+        ofx_obj.headers = headers(ofx)
         if ofx.find('ofx') is None:
             raise OfxParserException('The ofx file is empty!')
 
