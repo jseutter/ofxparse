@@ -1,7 +1,7 @@
 from __future__ import absolute_import, with_statement
 
 import sys
-import decimal
+from . import ofxdecimal as decimal
 import datetime
 import codecs
 import re
