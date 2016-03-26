@@ -16,7 +16,8 @@ if sys.version_info < (2,6):
     ]
 else:
     REQUIRES = [
-        "beautifulsoup4"
+        "beautifulsoup4",
+        "lxml",
     ]
 
 if sys.version_info < (2,7):
