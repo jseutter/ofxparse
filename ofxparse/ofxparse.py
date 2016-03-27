@@ -198,7 +198,7 @@ class OfxParserException(Exception):
 
 def headers(soup):
   for content in soup.contents:
-    if content.name <> None:continue #Skip Tags
+    if content.name != None:continue #Skip Tags
     content = content.strip()
     if content == '':continue #Skip empty navigable strings
     if content[-1]=='?':

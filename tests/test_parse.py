@@ -12,6 +12,7 @@ import six
 from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxParserException, soup_maker
+import collections
 
 class TestParse(TestCase):
     def testEmptyFile(self):
@@ -655,8 +656,9 @@ class TestHeader(TestCase):
         for test_tuple in headertest:
           with open_file(test_tuple[0]) as fh:
             ofx = OfxParser.parse(fh)
-            self.assertEquals(ofx.headers.items(),test_tuple[1],
-               'Unexpected header result for'+test_tuple[0])
+            headers = collections.OrderedDict(test_tuple[1])
+            self.assertEquals(ofx.headers,headers,
+               'Unexpected header result for '+test_tuple[0])
 
 if __name__ == "__main__":
     import unittest
