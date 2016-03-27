@@ -11,200 +11,8 @@ import six
 
 from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
-from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
-
-class TestOfxPreprocessedFile(TestCase):
-
-    def testPreprocess(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET:1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-<OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE><VAL.UE>a<VAL_UE>b<TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net<DTASOF>2222</BAL><BAL><NAME>Gross<DTASOF>3333</BAL></BALLIST></INVBAL></OFX>
-"""))
-        expect = """OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET:1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-<OFX><DTASOF><![CDATA[></tricky]]><LEAVE ALONE></DTASOF><VAL.UE>a</VAL.UE><VAL_UE>b</VAL_UE><TE_ST></TE_ST><TE.ST></TE.ST><INVBAL><BALLIST><BAL><NAME>Net</NAME><DTASOF>2222</DTASOF></BAL><BAL><NAME>Gross</NAME><DTASOF>3333</DTASOF></BAL></BALLIST></INVBAL></OFX>
-"""
-        ofx_file = OfxPreprocessedFile(fh)
-        data     = ofx_file.fh.read()
-        self.assertEqual(data,expect)
-
-    def testHeaders(self):
-        expect = {"OFXHEADER": six.u("100"),
-                  "DATA": six.u("OFXSGML"),
-                  "VERSION": six.u("102"),
-                  "SECURITY": None,
-                  "ENCODING": six.u("USASCII"),
-                  "CHARSET": six.u("1252"),
-                  "COMPRESSION": None,
-                  "OLDFILEUID": None,
-                  "NEWFILEUID": None,
-                  }
-        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
-        self.assertEquals(expect, ofx.headers)
-
-    def testUTF8(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        data = ofx_file.fh.read()
-
-        self.assertTrue(type(data) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testCP1252(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET: 1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testUTF8Japanese(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UTF-8
-CHARSET:CSUNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testBrokenLineEndings(self):
-        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
-        ofx_file = OfxPreprocessedFile(fh)
-        self.assertEquals(len(ofx_file.headers.keys()), 2)
-
-
-
-class TestOfxFile(TestCase):
-    def testHeaders(self):
-        expect = {"OFXHEADER": six.u("100"),
-                  "DATA": six.u("OFXSGML"),
-                  "VERSION": six.u("102"),
-                  "SECURITY": None,
-                  "ENCODING": six.u("USASCII"),
-                  "CHARSET": six.u("1252"),
-                  "COMPRESSION": None,
-                  "OLDFILEUID": None,
-                  "NEWFILEUID": None,
-                  }
-        ofx = OfxParser.parse(open_file('bank_medium.ofx'))
-        self.assertEquals(expect, ofx.headers)
-
-    def testUTF8(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        data = ofx_file.fh.read()
-
-        self.assertTrue(type(data) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testCP1252(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET: 1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testUTF8Japanese(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UTF-8
-CHARSET:CSUNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testBrokenLineEndings(self):
-        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
-        ofx_file = OfxFile(fh)
-        self.assertEquals(len(ofx_file.headers.keys()), 2)
-
+from ofxparse.ofxparse import OfxParserException, soup_maker
+import collections
 
 class TestParse(TestCase):
     def testEmptyFile(self):
@@ -232,7 +40,7 @@ class TestParse(TestCase):
         self.assertEquals('00', ofx.account.branch_id)
         self.assertEquals('CHECKING', ofx.account.account_type)
         self.assertEquals(Decimal('382.34'), ofx.account.statement.balance)
-        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17), 
+        self.assertEquals(datetime(2009, 5, 23, 12, 20, 17),
                           ofx.account.statement.balance_date)
         # Todo: support values in decimal or int form.
         # self.assertEquals('15',
@@ -323,7 +131,7 @@ class TestParseStmtrs(TestCase):
     def testThatParseStmtrsReturnsAnAccount(self):
         stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
-            stmtrs.find('stmtrs'), AccountType.Bank)[0]
+            stmtrs.find_all('stmtrs'), AccountType.Bank)[0]
         self.assertEquals('12300 000012345678', account.number)
         self.assertEquals('160000100', account.routing_number)
         self.assertEquals('CHECKING', account.account_type)
@@ -331,7 +139,7 @@ class TestParseStmtrs(TestCase):
     def testThatReturnedAccountAlsoHasAStatement(self):
         stmtrs = soup_maker(self.input)
         account = OfxParser.parseStmtrs(
-            stmtrs.find('stmtrs'), AccountType.Bank)[0]
+            stmtrs.find_all('stmtrs'), AccountType.Bank)[0]
         self.assertTrue(hasattr(account, 'statement'))
 
 
@@ -713,6 +521,144 @@ class TestParseSonrs(TestCase):
         self.assertEquals(ofx.signon.code, 15500)
         self.assertEquals(ofx.signon.severity, 'ERROR')
         self.assertEquals(ofx.signon.message, 'Your request could not be processed because you supplied an invalid identification code or your password was incorrect')
+
+class TestHeader(TestCase):
+    def TestCorrectExtract(self):
+        headertest = [
+           ('fidelity.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0')]),
+           ('investment_401k.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('investment_medium.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('multiple_accounts.ofx',
+            [(u'OFXHEADER', u'200'),
+             (u'VERSION', u'211'),
+             (u'SECURITY', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('multiple_accounts2.ofx',
+            [(u'OFXHEADER', u'200'),
+             (u'VERSION', u'211'),
+             (u'SECURITY', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('signon_fail.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'0e1a88e56fc548a1ba2e83bce6323bb6')]),
+           ('signon_success.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'3bb6707632b64da196722ef312e6376d')]),
+           ('signon_success_no_message.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'3bb6707632b64da196722ef312e6376d')]),
+           ('suncorp.ofx',
+            [(u'OFXHEADER', u'200'),
+             (u'VERSION', u'200'),
+             (u'SECURITY', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('vanguard.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0')]),
+           ('account_listing_aggregation.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', u'85230611d6fc414fa391a8c2425f8e9e')]),
+           ('bank_medium.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('bank_small.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)]),
+           ('checking.ofx',
+            [(u'OFXHEADER', u'100'),
+             (u'DATA', u'OFXSGML'),
+             (u'VERSION', u'102'),
+             (u'SECURITY', None),
+             (u'ENCODING', u'USASCII'),
+             (u'CHARSET', u'1252'),
+             (u'COMPRESSION', None),
+             (u'OLDFILEUID', None),
+             (u'NEWFILEUID', None)])]
+        for test_tuple in headertest:
+          with open_file(test_tuple[0]) as fh:
+            ofx = OfxParser.parse(fh)
+            headers = collections.OrderedDict(test_tuple[1])
+            self.assertEquals(ofx.headers,headers,
+               'Unexpected header result for '+test_tuple[0])
 
 if __name__ == "__main__":
     import unittest

@@ -7,3 +7,5 @@ dist/
 nbproject/
 .coverage
 htmlcov
+*.psproj
+
