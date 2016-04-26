@@ -581,10 +581,10 @@ class OfxParser(object):
             position.security = tag.contents[0].strip()
         tag = ofx.find('units')
         if (hasattr(tag, 'contents')):
-            position.units = decimal.Decimal(tag.contents[0].strip())
+            position.units = cls_.toDecimal(tag)
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
-            position.unit_price = decimal.Decimal(tag.contents[0].strip())
+            position.unit_price = cls_.toDecimal(tag)
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
             try:
@@ -624,19 +624,19 @@ class OfxParser(object):
             transaction.income_type = tag.contents[0].strip()
         tag = ofx.find('units')
         if (hasattr(tag, 'contents')):
-            transaction.units = decimal.Decimal(tag.contents[0].strip())
+            transaction.units = cls_.toDecimal(tag)
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
-            transaction.unit_price = decimal.Decimal(tag.contents[0].strip())
+            transaction.unit_price = cls_.toDecimal(tag)
         tag = ofx.find('commission')
         if (hasattr(tag, 'contents')):
-            transaction.commission = decimal.Decimal(tag.contents[0].strip())
+            transaction.commission = cls_.toDecimal(tag)
         tag = ofx.find('fees')
         if (hasattr(tag, 'contents')):
-            transaction.fees = decimal.Decimal(tag.contents[0].strip())
+            transaction.fees = cls_.toDecimal(tag)
         tag = ofx.find('total')
         if (hasattr(tag, 'contents')):
-            transaction.total = decimal.Decimal(tag.contents[0].strip())
+            transaction.total = cls_.toDecimal(tag)
         tag = ofx.find('inv401ksource')
         if (hasattr(tag, 'contents')):
             transaction.inv401ksource = tag.contents[0].strip()
@@ -787,8 +787,7 @@ class OfxParser(object):
             dtasof_tag = bal_tag.find('dtasof')
             if hasattr(balamt_tag, "contents"):
                 try:
-                    setattr(statement, bal_attr, decimal.Decimal(
-                        balamt_tag.contents[0].strip()))
+                    setattr(statement, bal_attr, cls_.toDecimal(balamt_tag))
                 except (IndexError, decimal.InvalidOperation):
                     ex = sys.exc_info()[1]
                     statement.warnings.append(
@@ -930,10 +929,7 @@ class OfxParser(object):
         amt_tag = txn_ofx.find('trnamt')
         if hasattr(amt_tag, "contents"):
             try:
-                contents = amt_tag.contents[0].strip()
-                if '.' not in contents:
-                    contents = contents.replace(',', '.')
-                transaction.amount = decimal.Decimal(contents)
+                transaction.amount = cls_.toDecimal(amt_tag)
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
@@ -1009,3 +1005,10 @@ class OfxParser(object):
                     number"))
 
         return transaction
+
+    @classmethod
+    def toDecimal(cls_, tag):
+        d = tag.contents[0].strip()
+        if ',' in d:
+            d = d.replace(',', '.')
+        return decimal.Decimal(d)
