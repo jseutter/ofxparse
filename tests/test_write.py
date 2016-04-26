@@ -6,6 +6,7 @@ import sys
 sys.path.append('..')
 from .support import open_file
 
+
 class TestOfxWrite(TestCase):
     def test_write(self):
         test_file = open_file('fidelity.ofx')

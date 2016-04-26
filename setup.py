@@ -10,7 +10,7 @@ VERSION = re.search(r"__version__ = '(.*?)'",
                     open("ofxparse/__init__.py").read()).group(1)
 
 # Use BeautifulSoup 3 on Python 2.5 and earlier and BeautifulSoup 4 otherwise
-if sys.version_info < (2,6):
+if sys.version_info < (2, 6):
     REQUIRES = [
         "beautifulSoup>=3.0",
     ]
@@ -19,7 +19,7 @@ else:
         "beautifulsoup4"
     ]
 
-if sys.version_info < (2,7):
+if sys.version_info < (2, 7):
     REQUIRES.extend([
         "ordereddict>=1.1",
     ])

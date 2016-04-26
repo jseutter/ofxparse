@@ -12,8 +12,10 @@ else:
 
 import six
 
+
 class InvalidOFXStructureException(Exception):
     pass
+
 
 class OfxData(object):
     def __init__(self, tag):
@@ -38,7 +40,8 @@ class OfxData(object):
             del self.nodes[name]
 
     def __setattr__(self, name, value):
-        if name in self.__dict__ or name in ['nodes', 'tag', 'data', 'headers', 'xml']:
+        if name in self.__dict__ or name in ['nodes', 'tag', 'data', '\
+                headers', 'xml']:
             self.__dict__[name] = value
         else:
             self.del_tag(name)
@@ -100,12 +103,14 @@ class OfxData(object):
         return len(self.nodes)
 
     def __str__(self):
-        return os.linesep.join("\t" * line[1] + line[0] for line in self.format())
+        return os.linesep.join("\t" * line[1] + line[0] for line \
+                               in self.format())
 
     def format(self):
         if self.data or not self.nodes:
             if self.tag.upper() == "OFX":
-                return [["<%s>%s</%s>" % (self.tag, self.data if self.data else "", self.tag), 0]]
+                return [["<%s>%s</%s>" % (self.tag, self.data \
+                        if self.data else "", self.tag), 0]]
             return [["<%s>%s" % (self.tag, self.data), 0]]
         else:
             ret = [["<%s>" % self.tag, -1]]
@@ -129,10 +134,12 @@ class OfxUtil(OfxData):
         self.headers = odict.OrderedDict()
         self.xml = ""
         if ofx_data:
-            if isinstance(ofx_data, six.string_types) and not ofx_data.lower().endswith('.ofx'):
+            if isinstance(ofx_data, six.string_types) and not \
+                    ofx_data.lower().endswith('.ofx'):
                 self.parse(ofx_data)
             else:
-                self.parse(open(ofx_data).read() if isinstance(ofx_data, six.string_types) else ofx_data.read())
+                self.parse(open(ofx_data).read() if isinstance(\
+                    ofx_data, six.string_types) else ofx_data.read())
 
     def parse(self, ofx):
         try:
@@ -168,24 +175,27 @@ class OfxUtil(OfxData):
             for i, tag in enumerate(tags):
                 gt = tag.index(">")
                 if tag[1] != "/":
-                    #Is an opening tag
+                    # Is an opening tag
                     if not can_open:
-                        tags[i - 1] = tags[i - 1] + "</" + heirarchy.pop() + ">"
+                        tags[i - 1] = tags[i - 1] + "</" + \
+                            heirarchy.pop() + ">"
                         can_open = True
                     tag_name = tag[1:gt].split()[0]
                     heirarchy.append(tag_name)
                     if len(tag) > gt + 1:
                         can_open = False
                 else:
-                    #Is a closing tag
+                    # Is a closing tag
                     tag_name = tag[2:gt].split()[0]
                     if tag_name not in heirarchy:
-                        #Close tag with no matching open, so delete it
+                        # Close tag with no matching open, so delete it
                         tags[i] = tag[gt + 1:]
                     else:
-                        #Close tag with matching open, but other open tags that need to be closed first
+                        # Close tag with matching open, but other open
+                        # tags that need to be closed first
                         while(tag_name != heirarchy[-1]):
-                            tags[i - 1] = tags[i - 1] + "</" + heirarchy.pop() + ">"
+                            tags[i - 1] = tags[i - 1] + "</" + \
+                                heirarchy.pop() + ">"
                         can_open = True
                         heirarchy.pop()
 
@@ -209,7 +219,8 @@ class OfxUtil(OfxData):
             f.write(str(self))
 
     def __str__(self):
-        ret = os.linesep.join(":".join(line) for line in six.iteritems(self.headers)) + os.linesep * 2
+        ret = os.linesep.join(":".join(line) for line in \
+                              six.iteritems(self.headers)) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
         return ret
 
@@ -219,22 +230,20 @@ if __name__ == "__main__":
     ofx = OfxUtil(fixtures + 'checking.ofx')
 #    ofx = OfxUtil(fixtures + 'fidelity.ofx')
 
-
-    #Manipulate OFX file via XML library
+    # Manipulate OFX file via XML library
 #    for transaction in ofx.xml.iter('STMTTRN'):
 #        transaction.find('NAME').text = transaction.find('MEMO').text
 #        transaction.remove(transaction.find('MEMO'))
 #    ofx.reload_xml()
 
-
-    #Manipulate OFX file via object tree built from XML
+    # Manipulate OFX file via object tree built from XML
 #    for transaction in ofx.bankmsgsrsv1.stmttrnrs.stmtrs.banktranlist.stmttrn:
 #        transaction.name = transaction.memo
 #        del transaction.memo
 #        transaction.notes = "Acknowledged"
-
-    #Modified sytnax for object tree data manipulation
-    #I'm using the __getitem__ method like the xml.iter method from ElementTree, as a recursive search
+    # Modified sytnax for object tree data manipulation
+    # I'm using the __getitem__ method like the xml.iter method from
+    # ElementTree, as a recursive search
     for transaction in ofx['stmttrn']:
         transaction.name = transaction.memo
         del transaction.memo
@@ -248,7 +257,7 @@ if __name__ == "__main__":
 #
     print(ofx)
 
-    #Write OFX data to output file
+    # Write OFX data to output file
 #    ofx.write('out.ofx')
 
 #    for file_name in os.listdir(fixtures):
