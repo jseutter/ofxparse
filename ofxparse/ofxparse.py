@@ -482,6 +482,9 @@ class OfxParser(object):
             )
             return local_date - timeZoneOffset + msec
         except:
+            if ofxDateTime[:8] == "00000000":
+                return None
+
             return datetime.datetime.strptime(
                 ofxDateTime[:8], '%Y%m%d') - timeZoneOffset + msec
 
@@ -931,9 +934,13 @@ class OfxParser(object):
             except IndexError:
                 raise OfxParserException("Invalid Transaction Date")
             except decimal.InvalidOperation:
-                raise OfxParserException(
-                    six.u("Invalid Transaction Amount: \
-                        '%s'") % amt_tag.contents[0])
+                # Some banks use a null transaction for including interest
+                # rate changes on your statement.
+                if amt_tag.contents[0].strip() in ('null', '-null'):
+                    transaction.amount = 0
+                else:
+                    raise OfxParserException(
+                        six.u("Invalid Transaction Amount: '%s'") % amt_tag.contents[0])
             except TypeError:
                 raise OfxParserException(
                     six.u("No Transaction Amount (a required field)"))
