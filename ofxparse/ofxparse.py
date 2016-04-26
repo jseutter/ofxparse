@@ -637,6 +637,9 @@ class OfxParser(object):
         tag = ofx.find('total')
         if (hasattr(tag, 'contents')):
             transaction.total = decimal.Decimal(tag.contents[0].strip())
+        tag = ofx.find('inv401ksource')
+        if (hasattr(tag, 'contents')):
+            transaction.inv401ksource = tag.contents[0].strip()
         return transaction
 
     @classmethod
