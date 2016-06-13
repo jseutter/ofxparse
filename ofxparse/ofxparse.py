@@ -103,7 +103,9 @@ class OfxFile(object):
         head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find(six.b('<'))]
 
-        for line in re.split(six.b('\r?\n?'), head_data):
+        normalised = head_data.replace(six.b('\r\n'), six.b('\n')).replace(six.b('\r'), six.b('\n'))
+
+        for line in re.split(six.b('\n'), normalised):
             # Newline?
             if line.strip() == six.b(""):
                 break
