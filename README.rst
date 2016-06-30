@@ -15,11 +15,13 @@ improved.  See the Help! section below for directions on how to do this.
 Example Usage
 =============
 
-Here's a sample program::
+Here's a sample program
+
+.. code:: python
 
   from ofxparse import OfxParser
-
-  ofx = OfxParser.parse(file('file.ofx'))
+  with codecs.open('file.ofx') as fileobj:
+      ofx = OfxParser.parse(fileobj)
   ofx.accounts                        # An account with information
   ofx.account.number                  # The account number
   ofx.account.routing_number          # The transit id (sometimes called branch number)
@@ -33,7 +35,8 @@ Here's a sample program::
 Help!
 =====
 
-Sample .ofx files are very useful.  If you want to help us out, please edit
+Sample ``.ofx`` and ``.qfx`` files are very useful.
+If you want to help us out, please edit
 all identifying information from the file and then email it to jseutter dot
 ofxparse at gmail dot com.
 
@@ -41,24 +44,31 @@ Development
 ===========
 
 Prerequisites::
-(Ubuntu) sudo apt-get install python-beautifulsoup python-nose python-coverage-test-runner
+  # Ubuntu
+  sudo apt-get install python-beautifulsoup python-nose python-coverage-test-runner
 
-Python 3:
-(pip) pip install BeautifulSoup4 six lxml nose coverage
+  # pip for Python 3:
+  pip install BeautifulSoup4 six lxml nose coverage
 
-Python 2:
-(pip) pip install BeautifulSoup six nose coverage
+  # pip for Python 2:
+  pip install BeautifulSoup six nose coverage
 
+Tests:
+Simply running the ``nosetests`` command should run the tests.
 
-The `six` package is required for python 2.X
+.. code:: bash
 
-Tests::
-Simply running the "nosetests" command should run the tests.  If you don't have
-nose installed, the following might also work:
+  nosetests
+
+If you don't have nose installed, the following might also work:
+
+.. code:: bash
 
   python -m unittest tests.test_parse
 
-Test Coverage Report::
+Test Coverage Report:
+
+.. code:: bash
 
   coverage run -m unittest tests.test_parse
   
@@ -72,7 +82,8 @@ Test Coverage Report::
 
 Homepage
 ========
-http://sites.google.com/site/ofxparse
+| Homepage: https://sites.google.com/site/ofxparse
+| Source: https://github.com/jseutter/ofxparse
 
 License
 =======
