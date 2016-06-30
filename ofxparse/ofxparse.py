@@ -103,7 +103,7 @@ class OfxFile(object):
         head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find(six.b('<'))]
 
-        for line in re.split(six.b('\r?\n?'), head_data):
+        for line in head_data.splitlines():
             # Newline?
             if line.strip() == six.b(""):
                 break
