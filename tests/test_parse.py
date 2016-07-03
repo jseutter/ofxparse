@@ -633,6 +633,12 @@ class TestFidelityInvestmentStatement(TestCase):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
         self.assertEquals(len(ofx.security_list), 7)
 
+    def testBalanceList(self):
+        ofx = OfxParser.parse(open_file('fidelity.ofx'))
+        self.assertEquals(len(ofx.account.statement.balance_list), 18)
+        self.assertEquals(ofx.account.statement.balance_list[0].name, 'Networth')
+        self.assertEquals(ofx.account.statement.balance_list[0].description, 'The net market value of all long and short positions in the account')
+        self.assertEquals(ofx.account.statement.balance_list[0].value, Decimal('32993.79'))
 
 class Test401InvestmentStatement(TestCase):
     def testTransferAggregate(self):
