@@ -239,6 +239,11 @@ class InvestmentAccount(Account):
         super(InvestmentAccount, self).__init__()
         self.brokerid = ''
 
+class BrokerageBalance:
+	def __init__(self):
+		self.name = None
+		self.description = None
+		self.value = None # decimal
 
 class Security:
     def __init__(self, uniqueid, name, ticker, memo):
@@ -708,6 +713,22 @@ class OfxParser(object):
                     {six.u('error'): transaction_type + ": " + str(e),
                      six.u('content'): investment_ofx}
                 )
+
+        ballist_ofx = invstmtrs_ofx.find('ballist')
+        if ballist_ofx is not None:
+            statement.balance_list = []
+            for balance_ofx in ballist_ofx.findAll('bal'):
+                brokerage_balance = BrokerageBalance()
+                name_ofx = balance_ofx.find('name')
+                if name_ofx is not None:
+                    brokerage_balance.name = name_ofx.contents[0].strip()
+                description_ofx = balance_ofx.find('desc')
+                if description_ofx is not None:
+                    brokerage_balance.description = description_ofx.contents[0].strip()
+                value_ofx = balance_ofx.find('value')
+                if value_ofx is not None:
+                    brokerage_balance.value = cls_.toDecimal(value_ofx)
+                statement.balance_list.append(brokerage_balance)
 
         return statement
 
