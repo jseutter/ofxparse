@@ -240,10 +240,10 @@ class InvestmentAccount(Account):
         self.brokerid = ''
 
 class BrokerageBalance:
-	def __init__(self):
-		self.name = None
-		self.description = None
-		self.value = None # decimal
+    def __init__(self):
+        self.name = None
+        self.description = None
+        self.value = None # decimal
 
 class Security:
     def __init__(self, uniqueid, name, ticker, memo):
@@ -714,21 +714,37 @@ class OfxParser(object):
                      six.u('content'): investment_ofx}
                 )
 
-        ballist_ofx = invstmtrs_ofx.find('ballist')
-        if ballist_ofx is not None:
-            statement.balance_list = []
-            for balance_ofx in ballist_ofx.findAll('bal'):
-                brokerage_balance = BrokerageBalance()
-                name_ofx = balance_ofx.find('name')
-                if name_ofx is not None:
-                    brokerage_balance.name = name_ofx.contents[0].strip()
-                description_ofx = balance_ofx.find('desc')
-                if description_ofx is not None:
-                    brokerage_balance.description = description_ofx.contents[0].strip()
-                value_ofx = balance_ofx.find('value')
-                if value_ofx is not None:
-                    brokerage_balance.value = cls_.toDecimal(value_ofx)
-                statement.balance_list.append(brokerage_balance)
+        invbal_ofx = invstmtrs_ofx.find('invbal')
+        if invbal_ofx is not None:
+            #<AVAILCASH>18073.98<MARGINBALANCE>+00000000000.00<SHORTBALANCE>+00000000000.00<BUYPOWER>+00000000000.00
+            availcash_ofx = invbal_ofx.find('availcash')
+            if availcash_ofx is not None:
+                statement.available_cash = cls_.toDecimal(availcash_ofx)
+            margin_balance_ofx = invbal_ofx.find('marginbalance')
+            if margin_balance_ofx is not None:
+                statement.margin_balance = cls_.toDecimal(margin_balance_ofx)
+            short_balance_ofx = invbal_ofx.find('shortbalance')
+            if short_balance_ofx is not None:
+                statement.short_balance = cls_.toDecimal(short_balance_ofx)
+            buy_power_ofx = invbal_ofx.find('buypower')
+            if buy_power_ofx is not None:
+                statement.buy_power = cls_.toDecimal(buy_power_ofx)
+
+            ballist_ofx = invbal_ofx.find('ballist')
+            if ballist_ofx is not None:
+                statement.balance_list = []
+                for balance_ofx in ballist_ofx.findAll('bal'):
+                    brokerage_balance = BrokerageBalance()
+                    name_ofx = balance_ofx.find('name')
+                    if name_ofx is not None:
+                        brokerage_balance.name = name_ofx.contents[0].strip()
+                    description_ofx = balance_ofx.find('desc')
+                    if description_ofx is not None:
+                        brokerage_balance.description = description_ofx.contents[0].strip()
+                    value_ofx = balance_ofx.find('value')
+                    if value_ofx is not None:
+                        brokerage_balance.value = cls_.toDecimal(value_ofx)
+                    statement.balance_list.append(brokerage_balance)
 
         return statement
 
