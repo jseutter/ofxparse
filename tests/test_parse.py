@@ -652,19 +652,22 @@ class Test401InvestmentStatement(TestCase):
                           'units': Decimal('8.846699'),
                           'unit_price': Decimal('22.2908'),
                           'total': Decimal('-197.2'),
-                          'security': 'FOO'},
+                          'security': 'FOO',
+                          'tferaction': None},
                          {'id': '2',
                           'type': 'transfer',
                           'units': Decimal('6.800992'),
                           'unit_price': Decimal('29.214856'),
                           'total': Decimal('0.0'),
-                          'security': 'BAR'},
+                          'security': 'BAR',
+                          'tferaction': 'IN'},
                          {'id': '3',
                           'type': 'transfer',
                           'units': Decimal('-9.060702'),
                           'unit_price': Decimal('21.928764'),
                           'total': Decimal('0.0'),
-                          'security': 'BAZ'}]
+                          'security': 'BAZ',
+                          'tferaction': 'OUT'}]
         for txn, expected_txn in zip(ofx.account.statement.transactions, expected_txns):
             self.assertEquals(txn.id, expected_txn['id'])
             self.assertEquals(txn.type, expected_txn['type'])
@@ -672,6 +675,7 @@ class Test401InvestmentStatement(TestCase):
             self.assertEquals(txn.unit_price, expected_txn['unit_price'])
             self.assertEquals(txn.total, expected_txn['total'])
             self.assertEquals(txn.security, expected_txn['security'])
+            self.assertEquals(txn.tferaction, expected_txn['tferaction'])
 
         expected_positions = [{'security': 'FOO',
                                'units': Decimal('17.604312'),
