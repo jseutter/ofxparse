@@ -714,6 +714,18 @@ class OfxParser(object):
                      six.u('content'): investment_ofx}
                 )
 
+        for transaction_ofx in invstmtrs_ofx.findAll('invbanktran'):
+            for stmt_ofx in transaction_ofx.findAll('stmttrn'):
+                try:
+                    statement.transactions.append(
+                        cls_.parseTransaction(stmt_ofx))
+                except OfxParserException:
+                    ofxError = sys.exc_info()[1]
+                    statement.discarded_entries.append(
+                        {'error': str(ofxError), 'content': transaction_ofx})
+                    if cls_.fail_fast:
+                        raise
+
         invbal_ofx = invstmtrs_ofx.find('invbal')
         if invbal_ofx is not None:
             #<AVAILCASH>18073.98<MARGINBALANCE>+00000000000.00<SHORTBALANCE>+00000000000.00<BUYPOWER>+00000000000.00

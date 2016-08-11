@@ -644,6 +644,31 @@ class TestFidelityInvestmentStatement(TestCase):
         self.assertEquals(ofx.account.statement.short_balance, Decimal('0'))
         self.assertEquals(ofx.account.statement.buy_power, Decimal('0'))
 
+class TestFidelitySavingsStatement(TestCase):
+    def testSTMTTRNInInvestmentBank(self):
+        ofx = OfxParser.parse(open_file('fidelity-savings.ofx'))
+
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEquals(len(ofx.account.statement.transactions), 4)
+
+        tx = ofx.account.statement.transactions[0]
+        self.assertEquals('check', tx.type)
+        self.assertEquals(datetime(
+            2012, 7, 20, 0, 0, 0) - timedelta(hours=-4), tx.date)
+        self.assertEquals(Decimal('-1500.00'), tx.amount)
+        self.assertEquals('X0000000000000000000001', tx.id)
+        self.assertEquals('Check Paid #0000001001', tx.payee)
+        self.assertEquals('Check Paid #0000001001', tx.memo)
+
+        tx = ofx.account.statement.transactions[1]
+        self.assertEquals('dep', tx.type)
+        self.assertEquals(datetime(
+            2012, 7, 27, 0, 0, 0) - timedelta(hours=-4), tx.date)
+        self.assertEquals(Decimal('115.8331'), tx.amount)
+        self.assertEquals('X0000000000000000000002', tx.id)
+        self.assertEquals('TRANSFERRED FROM     VS X10-08144', tx.payee)
+        self.assertEquals('TRANSFERRED FROM     VS X10-08144-1', tx.memo)
+
 class Test401InvestmentStatement(TestCase):
     def testTransferAggregate(self):
         ofx = OfxParser.parse(open_file('investment_401k.ofx'))
