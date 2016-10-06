@@ -47,6 +47,11 @@ def soup_maker(fh):
     try:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(fh, "xml")
+        # The xml parser is more strict but preserves CDATA. If it fails, to
+        # find anything, fall back to the more lenient html parsing.
+        if not len(soup):
+            skip_headers(fh)
+            soup = BeautifulSoup(fh, "lxml")
         for tag in soup.findAll():
             tag.name = tag.name.lower()
     except ImportError:
@@ -293,7 +298,7 @@ class Signon:
             ret += "\t\t\t</FI>\r\n"
         if self.intu_bid is not None:
             ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
-        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t\t</SONRS>\r\n"
         ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
