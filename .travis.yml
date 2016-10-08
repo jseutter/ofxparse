@@ -7,7 +7,7 @@ python:
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install BeautifulSoup six nose coverage; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install BeautifulSoup4 six lxml nose coverage; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install BeautifulSoup4 six nose coverage; fi
 
 script:
   - nosetests
