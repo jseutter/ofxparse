@@ -46,7 +46,7 @@ def soup_maker(fh):
     skip_headers(fh)
     try:
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(fh, "xml")
+        soup = BeautifulSoup(fh, "html.parser")
         for tag in soup.findAll():
             tag.name = tag.name.lower()
     except ImportError:
