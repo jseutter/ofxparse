@@ -1,3 +1,5 @@
+import six
+
 class OfxPrinter():
     ofx = None
     out_filename = None
@@ -24,7 +26,7 @@ class OfxPrinter():
         )
 
     def writeHeaders(self):
-        for k, v in self.ofx.headers.iteritems():
+        for k, v in six.iteritems(self.ofx.headers):
             if v is None:
                 self.writeLine("{0}:NONE".format(k))
             else:
@@ -183,7 +185,7 @@ class OfxPrinter():
         if filename is None:
             filename = self.out_filename
 
-        self.out_handle = open(filename, 'wb')
+        self.out_handle = open(filename, 'w')
 
         self.writeHeaders()
 
