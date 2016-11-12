@@ -330,6 +330,7 @@ class InvestmentTransaction(object):
         self.commission = decimal.Decimal(0)
         self.fees = decimal.Decimal(0)
         self.total = decimal.Decimal(0)
+        self.tferaction = None
 
     def __repr__(self):
         return "<InvestmentTransaction type=" + str(self.type) + ", \
@@ -620,6 +621,9 @@ class OfxParser(object):
         tag = ofx.find('inv401ksource')
         if (hasattr(tag, 'contents')):
             transaction.inv401ksource = tag.contents[0].strip()
+        tag = ofx.find('tferaction')
+        if (hasattr(tag, 'contents')):
+            transaction.tferaction = tag.contents[0].strip().lower()
         return transaction
 
     @classmethod
