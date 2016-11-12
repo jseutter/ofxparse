@@ -92,3 +92,4 @@ ofxparse is released under an MIT license.  See the LICENSE file for the actual
 license text.  The basic idea is that if you can use Python to do what you are
 doing, you can also use this library.
 
+
