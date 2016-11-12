@@ -22,37 +22,13 @@ else:
 
 from . import mcc
 
-
-def skip_headers(fh):
-    '''
-    Prepare `fh` for parsing by BeautifulSoup by skipping its OFX
-    headers.
-    '''
-    if fh is None or isinstance(fh, six.string_types):
-        return
-    fh.seek(0)
-    header_re = re.compile(r"^\s*\w+:\s*\w+\s*$")
-    while True:
-        pos = fh.tell()
-        line = fh.readline()
-        if not line:
-            break
-        if header_re.search(line) is None:
-            fh.seek(pos)
-            return
-
-
 def soup_maker(fh):
-    skip_headers(fh)
     try:
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(fh, "html.parser")
-        for tag in soup.findAll():
-            tag.name = tag.name.lower()
+        return BeautifulSoup(fh, 'html.parser')
     except ImportError:
         from BeautifulSoup import BeautifulStoneSoup
-        soup = BeautifulStoneSoup(fh)
-    return soup
+        return BeautifulStoneSoup(fh)
 
 
 def try_decode(string, encoding):
@@ -293,7 +269,7 @@ class Signon:
             ret += "\t\t\t</FI>\r\n"
         if self.intu_bid is not None:
             ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
-        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t\t</SONRS>\r\n"
         ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
@@ -405,7 +381,6 @@ class OfxParser(object):
         ofx_obj.accounts = []
         ofx_obj.signon = None
 
-        skip_headers(ofx_file.fh)
         ofx = soup_maker(ofx_file.fh)
         if ofx.find('ofx') is None:
             raise OfxParserException('The ofx file is empty!')
