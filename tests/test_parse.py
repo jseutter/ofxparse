@@ -633,6 +633,41 @@ class TestFidelityInvestmentStatement(TestCase):
         ofx = OfxParser.parse(open_file('fidelity.ofx'))
         self.assertEquals(len(ofx.security_list), 7)
 
+    def testBalanceList(self):
+        ofx = OfxParser.parse(open_file('fidelity.ofx'))
+        self.assertEquals(len(ofx.account.statement.balance_list), 18)
+        self.assertEquals(ofx.account.statement.balance_list[0].name, 'Networth')
+        self.assertEquals(ofx.account.statement.balance_list[0].description, 'The net market value of all long and short positions in the account')
+        self.assertEquals(ofx.account.statement.balance_list[0].value, Decimal('32993.79'))
+        self.assertEquals(ofx.account.statement.available_cash, Decimal('18073.98'))
+        self.assertEquals(ofx.account.statement.margin_balance, Decimal('0'))
+        self.assertEquals(ofx.account.statement.short_balance, Decimal('0'))
+        self.assertEquals(ofx.account.statement.buy_power, Decimal('0'))
+
+class TestFidelitySavingsStatement(TestCase):
+    def testSTMTTRNInInvestmentBank(self):
+        ofx = OfxParser.parse(open_file('fidelity-savings.ofx'))
+
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEquals(len(ofx.account.statement.transactions), 4)
+
+        tx = ofx.account.statement.transactions[0]
+        self.assertEquals('check', tx.type)
+        self.assertEquals(datetime(
+            2012, 7, 20, 0, 0, 0) - timedelta(hours=-4), tx.date)
+        self.assertEquals(Decimal('-1500.00'), tx.amount)
+        self.assertEquals('X0000000000000000000001', tx.id)
+        self.assertEquals('Check Paid #0000001001', tx.payee)
+        self.assertEquals('Check Paid #0000001001', tx.memo)
+
+        tx = ofx.account.statement.transactions[1]
+        self.assertEquals('dep', tx.type)
+        self.assertEquals(datetime(
+            2012, 7, 27, 0, 0, 0) - timedelta(hours=-4), tx.date)
+        self.assertEquals(Decimal('115.8331'), tx.amount)
+        self.assertEquals('X0000000000000000000002', tx.id)
+        self.assertEquals('TRANSFERRED FROM     VS X10-08144', tx.payee)
+        self.assertEquals('TRANSFERRED FROM     VS X10-08144-1', tx.memo)
 
 class Test401InvestmentStatement(TestCase):
     def testTransferAggregate(self):
@@ -642,19 +677,22 @@ class Test401InvestmentStatement(TestCase):
                           'units': Decimal('8.846699'),
                           'unit_price': Decimal('22.2908'),
                           'total': Decimal('-197.2'),
-                          'security': 'FOO'},
+                          'security': 'FOO',
+                          'tferaction': None},
                          {'id': '2',
                           'type': 'transfer',
                           'units': Decimal('6.800992'),
                           'unit_price': Decimal('29.214856'),
                           'total': Decimal('0.0'),
-                          'security': 'BAR'},
+                          'security': 'BAR',
+                          'tferaction': 'IN'},
                          {'id': '3',
                           'type': 'transfer',
                           'units': Decimal('-9.060702'),
                           'unit_price': Decimal('21.928764'),
                           'total': Decimal('0.0'),
-                          'security': 'BAZ'}]
+                          'security': 'BAZ',
+                          'tferaction': 'OUT'}]
         for txn, expected_txn in zip(ofx.account.statement.transactions, expected_txns):
             self.assertEquals(txn.id, expected_txn['id'])
             self.assertEquals(txn.type, expected_txn['type'])
@@ -662,6 +700,7 @@ class Test401InvestmentStatement(TestCase):
             self.assertEquals(txn.unit_price, expected_txn['unit_price'])
             self.assertEquals(txn.total, expected_txn['total'])
             self.assertEquals(txn.security, expected_txn['security'])
+            self.assertEquals(txn.tferaction, expected_txn['tferaction'])
 
         expected_positions = [{'security': 'FOO',
                                'units': Decimal('17.604312'),

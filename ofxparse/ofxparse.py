@@ -22,37 +22,13 @@ else:
 
 from . import mcc
 
-
-def skip_headers(fh):
-    '''
-    Prepare `fh` for parsing by BeautifulSoup by skipping its OFX
-    headers.
-    '''
-    if fh is None or isinstance(fh, six.string_types):
-        return
-    fh.seek(0)
-    header_re = re.compile(r"^\s*\w+:\s*\w+\s*$")
-    while True:
-        pos = fh.tell()
-        line = fh.readline()
-        if not line:
-            break
-        if header_re.search(line) is None:
-            fh.seek(pos)
-            return
-
-
 def soup_maker(fh):
-    skip_headers(fh)
     try:
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(fh, "xml")
-        for tag in soup.findAll():
-            tag.name = tag.name.lower()
+        return BeautifulSoup(fh, 'html.parser')
     except ImportError:
         from BeautifulSoup import BeautifulStoneSoup
-        soup = BeautifulStoneSoup(fh)
-    return soup
+        return BeautifulStoneSoup(fh)
 
 
 def try_decode(string, encoding):
@@ -103,7 +79,7 @@ class OfxFile(object):
         head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find(six.b('<'))]
 
-        for line in re.split(six.b('\r?\n?'), head_data):
+        for line in head_data.splitlines():
             # Newline?
             if line.strip() == six.b(""):
                 break
@@ -239,6 +215,11 @@ class InvestmentAccount(Account):
         super(InvestmentAccount, self).__init__()
         self.brokerid = ''
 
+class BrokerageBalance:
+    def __init__(self):
+        self.name = None
+        self.description = None
+        self.value = None # decimal
 
 class Security:
     def __init__(self, uniqueid, name, ticker, memo):
@@ -288,7 +269,7 @@ class Signon:
             ret += "\t\t\t</FI>\r\n"
         if self.intu_bid is not None:
             ret += "\t\t\t<INTU.BID>" + self.intu_bid + "\r\n"
-        ret += "\t\t</SONRS>\r\n" 
+        ret += "\t\t</SONRS>\r\n"
         ret += "\t</SIGNONMSGSRSV1>\r\n"
         return ret
 
@@ -349,6 +330,7 @@ class InvestmentTransaction(object):
         self.commission = decimal.Decimal(0)
         self.fees = decimal.Decimal(0)
         self.total = decimal.Decimal(0)
+        self.tferaction = None
 
     def __repr__(self):
         return "<InvestmentTransaction type=" + str(self.type) + ", \
@@ -400,7 +382,6 @@ class OfxParser(object):
         ofx_obj.accounts = []
         ofx_obj.signon = None
 
-        skip_headers(ofx_file.fh)
         ofx = soup_maker(ofx_file.fh)
         if ofx.find('ofx') is None:
             raise OfxParserException('The ofx file is empty!')
@@ -640,6 +621,9 @@ class OfxParser(object):
         tag = ofx.find('inv401ksource')
         if (hasattr(tag, 'contents')):
             transaction.inv401ksource = tag.contents[0].strip()
+        tag = ofx.find('tferaction')
+        if (hasattr(tag, 'contents')):
+            transaction.tferaction = tag.contents[0].strip().lower()
         return transaction
 
     @classmethod
@@ -708,6 +692,50 @@ class OfxParser(object):
                     {six.u('error'): transaction_type + ": " + str(e),
                      six.u('content'): investment_ofx}
                 )
+
+        for transaction_ofx in invstmtrs_ofx.findAll('invbanktran'):
+            for stmt_ofx in transaction_ofx.findAll('stmttrn'):
+                try:
+                    statement.transactions.append(
+                        cls_.parseTransaction(stmt_ofx))
+                except OfxParserException:
+                    ofxError = sys.exc_info()[1]
+                    statement.discarded_entries.append(
+                        {'error': str(ofxError), 'content': transaction_ofx})
+                    if cls_.fail_fast:
+                        raise
+
+        invbal_ofx = invstmtrs_ofx.find('invbal')
+        if invbal_ofx is not None:
+            #<AVAILCASH>18073.98<MARGINBALANCE>+00000000000.00<SHORTBALANCE>+00000000000.00<BUYPOWER>+00000000000.00
+            availcash_ofx = invbal_ofx.find('availcash')
+            if availcash_ofx is not None:
+                statement.available_cash = cls_.toDecimal(availcash_ofx)
+            margin_balance_ofx = invbal_ofx.find('marginbalance')
+            if margin_balance_ofx is not None:
+                statement.margin_balance = cls_.toDecimal(margin_balance_ofx)
+            short_balance_ofx = invbal_ofx.find('shortbalance')
+            if short_balance_ofx is not None:
+                statement.short_balance = cls_.toDecimal(short_balance_ofx)
+            buy_power_ofx = invbal_ofx.find('buypower')
+            if buy_power_ofx is not None:
+                statement.buy_power = cls_.toDecimal(buy_power_ofx)
+
+            ballist_ofx = invbal_ofx.find('ballist')
+            if ballist_ofx is not None:
+                statement.balance_list = []
+                for balance_ofx in ballist_ofx.findAll('bal'):
+                    brokerage_balance = BrokerageBalance()
+                    name_ofx = balance_ofx.find('name')
+                    if name_ofx is not None:
+                        brokerage_balance.name = name_ofx.contents[0].strip()
+                    description_ofx = balance_ofx.find('desc')
+                    if description_ofx is not None:
+                        brokerage_balance.description = description_ofx.contents[0].strip()
+                    value_ofx = balance_ofx.find('value')
+                    if value_ofx is not None:
+                        brokerage_balance.value = cls_.toDecimal(value_ofx)
+                    statement.balance_list.append(brokerage_balance)
 
         return statement
 
@@ -1009,6 +1037,6 @@ class OfxParser(object):
     @classmethod
     def toDecimal(cls_, tag):
         d = tag.contents[0].strip()
-        if ',' in d:
+        if '.' not in d and ',' in d:
             d = d.replace(',', '.')
         return decimal.Decimal(d)
