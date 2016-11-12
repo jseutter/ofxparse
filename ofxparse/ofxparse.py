@@ -623,7 +623,7 @@ class OfxParser(object):
             transaction.inv401ksource = tag.contents[0].strip()
         tag = ofx.find('tferaction')
         if (hasattr(tag, 'contents')):
-            transaction.tferaction = tag.contents[0].strip().lower()
+            transaction.tferaction = tag.contents[0].strip()
         return transaction
 
     @classmethod
