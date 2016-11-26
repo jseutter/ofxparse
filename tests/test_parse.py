@@ -142,6 +142,27 @@ class TestOfxFile(TestCase):
             ofx = OfxParser.parse(f)
         self.assertEqual(expect, ofx.headers)
 
+    def testTextFileHandler(self):
+        with open_file("bank_medium.ofx") as fh:
+            with open_file("bank_medium.ofx", mode="r") as fh_str:
+                ofx_file = OfxFile(fh)
+                headers = ofx_file.headers
+                data = ofx_file.fh.read()
+
+                self.assertTrue(type(data) is six.text_type)
+                for key, value in six.iteritems(headers):
+                    self.assertTrue(type(key) is six.text_type)
+                    self.assertTrue(type(value) is not six.binary_type)
+
+                ofx_file = OfxFile(fh_str)
+                headers = ofx_file.headers
+                data = ofx_file.fh.read()
+
+                self.assertTrue(type(data) is six.text_type)
+                for key, value in six.iteritems(headers):
+                    self.assertTrue(type(key) is six.text_type)
+                    self.assertTrue(type(value) is not six.binary_type)
+
     def testUTF8(self):
         fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
