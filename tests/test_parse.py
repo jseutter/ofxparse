@@ -14,7 +14,113 @@ from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
 
 
-class TestOfxPreprocessedFile(TestCase):
+class TestOfxFile(TestCase):
+    OfxFileCls = OfxFile
+
+    def testHeaders(self):
+        expect = {"OFXHEADER": six.u("100"),
+                  "DATA": six.u("OFXSGML"),
+                  "VERSION": six.u("102"),
+                  "SECURITY": None,
+                  "ENCODING": six.u("USASCII"),
+                  "CHARSET": six.u("1252"),
+                  "COMPRESSION": None,
+                  "OLDFILEUID": None,
+                  "NEWFILEUID": None,
+                  }
+        with open_file('bank_medium.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertEqual(expect, ofx.headers)
+
+    def testTextFileHandler(self):
+        with open_file("bank_medium.ofx") as fh:
+            with open_file("bank_medium.ofx", mode="r") as fh_str:
+                ofx_file = self.OfxFileCls(fh)
+                headers = ofx_file.headers
+                data = ofx_file.fh.read()
+
+                self.assertTrue(type(data) is six.text_type)
+                for key, value in six.iteritems(headers):
+                    self.assertTrue(type(key) is six.text_type)
+                    self.assertTrue(type(value) is not six.binary_type)
+
+                ofx_file = self.OfxFileCls(fh_str)
+                headers = ofx_file.headers
+                data = ofx_file.fh.read()
+
+                self.assertTrue(type(data) is six.text_type)
+                for key, value in six.iteritems(headers):
+                    self.assertTrue(type(key) is six.text_type)
+                    self.assertTrue(type(value) is not six.binary_type)
+
+    def testUTF8(self):
+        fh = six.BytesIO(six.b("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+"""))
+        ofx_file = self.OfxFileCls(fh)
+        headers = ofx_file.headers
+        data = ofx_file.fh.read()
+
+        self.assertTrue(type(data) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
+            self.assertTrue(type(value) is not six.binary_type)
+
+    def testCP1252(self):
+        fh = six.BytesIO(six.b("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET: 1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+"""))
+        ofx_file = self.OfxFileCls(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
+            self.assertTrue(type(value) is not six.binary_type)
+
+    def testUTF8Japanese(self):
+        fh = six.BytesIO(six.b("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UTF-8
+CHARSET:CSUNICODE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+"""))
+        ofx_file = self.OfxFileCls(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+
+        self.assertTrue(type(result) is six.text_type)
+        for key, value in six.iteritems(headers):
+            self.assertTrue(type(key) is six.text_type)
+            self.assertTrue(type(value) is not six.binary_type)
+
+    def testBrokenLineEndings(self):
+        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
+        ofx_file = self.OfxFileCls(fh)
+        self.assertEqual(len(ofx_file.headers.keys()), 2)
+
+
+class TestOfxPreprocessedFile(TestOfxFile):
+    OfxFileCls = OfxPreprocessedFile
 
     def testPreprocess(self):
         fh = six.BytesIO(six.b("""OFXHEADER:100
@@ -44,189 +150,6 @@ NEWFILEUID:NONE
         ofx_file = OfxPreprocessedFile(fh)
         data = ofx_file.fh.read()
         self.assertEqual(data, expect)
-
-    def testHeaders(self):
-        expect = {"OFXHEADER": six.u("100"),
-                  "DATA": six.u("OFXSGML"),
-                  "VERSION": six.u("102"),
-                  "SECURITY": None,
-                  "ENCODING": six.u("USASCII"),
-                  "CHARSET": six.u("1252"),
-                  "COMPRESSION": None,
-                  "OLDFILEUID": None,
-                  "NEWFILEUID": None,
-                  }
-        with open_file('bank_medium.ofx') as f:
-            ofx = OfxParser.parse(f)
-        self.assertEqual(expect, ofx.headers)
-
-    def testUTF8(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        data = ofx_file.fh.read()
-
-        self.assertTrue(type(data) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testCP1252(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET: 1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testUTF8Japanese(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UTF-8
-CHARSET:CSUNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxPreprocessedFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testBrokenLineEndings(self):
-        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
-        ofx_file = OfxPreprocessedFile(fh)
-        self.assertEqual(len(ofx_file.headers.keys()), 2)
-
-
-class TestOfxFile(TestCase):
-    def testHeaders(self):
-        expect = {"OFXHEADER": six.u("100"),
-                  "DATA": six.u("OFXSGML"),
-                  "VERSION": six.u("102"),
-                  "SECURITY": None,
-                  "ENCODING": six.u("USASCII"),
-                  "CHARSET": six.u("1252"),
-                  "COMPRESSION": None,
-                  "OLDFILEUID": None,
-                  "NEWFILEUID": None,
-                  }
-        with open_file('bank_medium.ofx') as f:
-            ofx = OfxParser.parse(f)
-        self.assertEqual(expect, ofx.headers)
-
-    def testTextFileHandler(self):
-        with open_file("bank_medium.ofx") as fh:
-            with open_file("bank_medium.ofx", mode="r") as fh_str:
-                ofx_file = OfxFile(fh)
-                headers = ofx_file.headers
-                data = ofx_file.fh.read()
-
-                self.assertTrue(type(data) is six.text_type)
-                for key, value in six.iteritems(headers):
-                    self.assertTrue(type(key) is six.text_type)
-                    self.assertTrue(type(value) is not six.binary_type)
-
-                ofx_file = OfxFile(fh_str)
-                headers = ofx_file.headers
-                data = ofx_file.fh.read()
-
-                self.assertTrue(type(data) is six.text_type)
-                for key, value in six.iteritems(headers):
-                    self.assertTrue(type(key) is six.text_type)
-                    self.assertTrue(type(value) is not six.binary_type)
-
-    def testUTF8(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        data = ofx_file.fh.read()
-
-        self.assertTrue(type(data) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testCP1252(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:USASCII
-CHARSET: 1252
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testUTF8Japanese(self):
-        fh = six.BytesIO(six.b("""OFXHEADER:100
-DATA:OFXSGML
-VERSION:102
-SECURITY:NONE
-ENCODING:UTF-8
-CHARSET:CSUNICODE
-COMPRESSION:NONE
-OLDFILEUID:NONE
-NEWFILEUID:NONE
-"""))
-        ofx_file = OfxFile(fh)
-        headers = ofx_file.headers
-        result = ofx_file.fh.read()
-
-        self.assertTrue(type(result) is six.text_type)
-        for key, value in six.iteritems(headers):
-            self.assertTrue(type(key) is six.text_type)
-            self.assertTrue(type(value) is not six.binary_type)
-
-    def testBrokenLineEndings(self):
-        fh = six.BytesIO(six.b("OFXHEADER:100\rDATA:OFXSGML\r"))
-        ofx_file = OfxFile(fh)
-        self.assertEqual(len(ofx_file.headers.keys()), 2)
 
 
 class TestParse(TestCase):
