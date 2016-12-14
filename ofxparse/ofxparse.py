@@ -411,6 +411,21 @@ class OfxParser(object):
                 ofx_obj.status['severity'] = \
                     stmttrnrs_status.find('severity').contents[0].strip()
 
+        ccstmttrnrs = ofx.find('ccstmttrnrs')
+        if ccstmttrnrs:
+            ccstmttrnrs_trnuid = ccstmttrnrs.find('trnuid')
+            if ccstmttrnrs_trnuid:
+                ofx_obj.trnuid = ccstmttrnrs_trnuid.contents[0].strip()
+
+            ccstmttrnrs_status = ccstmttrnrs.find('status')
+            if ccstmttrnrs_status:
+                ofx_obj.status = {}
+                ofx_obj.status['code'] = int(
+                    ccstmttrnrs_status.find('code').contents[0].strip()
+                )
+                ofx_obj.status['severity'] = \
+                    ccstmttrnrs_status.find('severity').contents[0].strip()
+
         stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
             ofx_obj.accounts += cls_.parseStmtrs(stmtrs_ofx, AccountType.Bank)
