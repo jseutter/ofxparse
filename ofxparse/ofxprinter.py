@@ -73,8 +73,8 @@ class OfxPrinter():
         self.writeLine("</STMTTRN>", tabs=tabs)
 
     def writeLedgerBal(self, statement, tabs=4):
-        bal = getattr(statement, 'balance')
-        baldt = getattr(statement, 'balance_date')
+        bal = getattr(statement, 'balance', None)
+        baldt = getattr(statement, 'balance_date', None)
 
         if bal and baldt:
             self.writeLine("<LEDGERBAL>", tabs=tabs)
@@ -85,8 +85,8 @@ class OfxPrinter():
             self.writeLine("</LEDGERBAL>", tabs=tabs)
 
     def writeAvailBal(self, statement, tabs=4):
-        bal = getattr(statement, 'available_balance')
-        baldt = getattr(statement, 'available_balance_date')
+        bal = getattr(statement, 'available_balance', None)
+        baldt = getattr(statement, 'available_balance_date', None)
 
         if bal and baldt:
             self.writeLine("<AVAILBAL>", tabs=tabs)
