@@ -22,13 +22,12 @@ else:
 
 from . import mcc
 
-def soup_maker(fh):
-    try:
-        from bs4 import BeautifulSoup
-        return BeautifulSoup(fh, 'html.parser')
-    except ImportError:
-        from BeautifulSoup import BeautifulStoneSoup
-        return BeautifulStoneSoup(fh)
+try:
+    from bs4 import BeautifulSoup
+    soup_maker = lambda fh: BeautifulSoup(fh, 'html.parser')
+except ImportError:
+    from BeautifulSoup import BeautifulStoneSoup
+    soup_maker = BeautifulStoneSoup
 
 
 def try_decode(string, encoding):
