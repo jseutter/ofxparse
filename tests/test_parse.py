@@ -610,32 +610,38 @@ class TestTiaaCrefStatement(TestCase):
             {
                 'security': '222222126',
                 'units': Decimal('13.0763'),
-                'unit_price': Decimal('1.0000')
+                'unit_price': Decimal('1.0000'),
+                'market_value': Decimal('13.0763')
             },
             {
                 'security': '222222217',
                 'units': Decimal('1.0000'),
-                'unit_price': Decimal('25.5785')
+                'unit_price': Decimal('25.5785'),
+                'market_value': Decimal('25.5785')
             },
             {
                 'security': '222222233',
                 'units': Decimal('8.7605'),
-                'unit_price': Decimal('12.4823')
+                'unit_price': Decimal('12.4823'),
+                'market_value': Decimal('109.3512')
             },
             {
                 'security': '222222258',
                 'units': Decimal('339.2012'),
-                'unit_price': Decimal('12.3456')
+                'unit_price': Decimal('12.3456'),
+                'market_value': Decimal('4187.6423')
             },
             {
                 'security': '111111111',
                 'units': Decimal('543.71'),
-                'unit_price': Decimal('1')
+                'unit_price': Decimal('1'),
+                'market_value': Decimal('543.71')
             },
             {
                 'security': '333333200',
                 'units': Decimal('2.00'),
-                'unit_price': Decimal('10.00')
+                'unit_price': Decimal('10.00'),
+                'market_value': Decimal('20.00')
             }
         ]
         self.assertEqual(
@@ -648,6 +654,7 @@ class TestTiaaCrefStatement(TestCase):
             self.assertEqual(pos.security, expected_pos['security'])
             self.assertEqual(pos.units, expected_pos['units'])
             self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+            self.assertEqual(pos.market_value, expected_pos['market_value'])
 
 
 class TestFidelityInvestmentStatement(TestCase):
@@ -658,6 +665,9 @@ class TestFidelityInvestmentStatement(TestCase):
         self.assertEqual(len(ofx.account.statement.positions), 6)
         self.assertEqual(
             ofx.account.statement.positions[0].units, Decimal('128.0'))
+        self.assertEqual(
+            ofx.account.statement.positions[0].market_value, Decimal('5231.36')
+        )
 
     def testSecurityListSuccess(self):
         with open_file('fidelity.ofx') as f:
@@ -736,19 +746,31 @@ class Test401InvestmentStatement(TestCase):
             self.assertEqual(txn.security, expected_txn['security'])
             self.assertEqual(txn.tferaction, expected_txn['tferaction'])
 
-        expected_positions = [{'security': 'FOO',
-                               'units': Decimal('17.604312'),
-                               'unit_price': Decimal('22.517211')},
-                              {'security': 'BAR',
-                               'units': Decimal('13.550983'),
-                               'unit_price': Decimal('29.214855')},
-                              {'security': 'BAZ',
-                               'units': Decimal('0.0'),
-                               'unit_price': Decimal('0.0')}]
+        expected_positions = [
+            {
+                'security': 'FOO',
+                'units': Decimal('17.604312'),
+                'unit_price': Decimal('22.517211'),
+                'market_value': Decimal('396.4')
+            },
+            {
+                'security': 'BAR',
+                'units': Decimal('13.550983'),
+                'unit_price': Decimal('29.214855'),
+                'market_value': Decimal('395.89')
+            },
+            {
+                'security': 'BAZ',
+                'units': Decimal('0.0'),
+                'unit_price': Decimal('0.0'),
+                'market_value': Decimal('0.0')
+            }
+        ]
         for pos, expected_pos in zip(ofx.account.statement.positions, expected_positions):
             self.assertEqual(pos.security, expected_pos['security'])
             self.assertEqual(pos.units, expected_pos['units'])
             self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+            self.assertEqual(pos.market_value, expected_pos['market_value'])
 
 
 class TestSuncorpBankStatement(TestCase):
