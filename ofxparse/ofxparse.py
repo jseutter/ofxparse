@@ -348,6 +348,7 @@ class Position(object):
         self.security = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
+        self.market_value = decimal.Decimal(0)
 
 
 class Institution(object):
@@ -587,6 +588,9 @@ class OfxParser(object):
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
             position.unit_price = cls_.toDecimal(tag)
+        tag = ofx.find('mktval')
+        if (hasattr(tag, 'contents')):
+            position.market_value = cls_.toDecimal(tag)
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
             try:
