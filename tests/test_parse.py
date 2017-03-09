@@ -574,6 +574,82 @@ class TestVanguard401kStatement(TestCase):
                           'MATCH')
 
 
+class TestTiaaCrefStatement(TestCase):
+    def testReadAccount(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'account_id'))
+        self.assertEqual(ofx.account.account_id, '111A1111 22B222 33C333')
+        self.assertTrue(hasattr(ofx.account, 'type'))
+        self.assertEqual(ofx.account.type, AccountType.Investment)
+
+    def testReadTransfer(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEqual(len(ofx.account.statement.transactions), 1)
+        self.assertEqual(
+            ofx.account.statement.transactions[-1].id,
+            'TIAA#20170307160000.000[-4:EDT]160000.000[-4:EDT]'
+        )
+        self.assertEqual(
+            'transfer',
+            ofx.account.statement.transactions[-1].type
+        )
+
+    def testReadPositions(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'positions'))
+        expected_positions = [
+            {
+                'security': '222222126',
+                'units': Decimal('13.0763'),
+                'unit_price': Decimal('1.0000')
+            },
+            {
+                'security': '222222217',
+                'units': Decimal('1.0000'),
+                'unit_price': Decimal('25.5785')
+            },
+            {
+                'security': '222222233',
+                'units': Decimal('8.7605'),
+                'unit_price': Decimal('12.4823')
+            },
+            {
+                'security': '222222258',
+                'units': Decimal('339.2012'),
+                'unit_price': Decimal('12.3456')
+            },
+            {
+                'security': '111111111',
+                'units': Decimal('543.71'),
+                'unit_price': Decimal('1')
+            },
+            {
+                'security': '333333200',
+                'units': Decimal('2.00'),
+                'unit_price': Decimal('10.00')
+            }
+        ]
+        self.assertEqual(
+            len(ofx.account.statement.positions),
+            len(expected_positions)
+        )
+        for pos, expected_pos in zip(
+                ofx.account.statement.positions, expected_positions
+        ):
+            self.assertEqual(pos.security, expected_pos['security'])
+            self.assertEqual(pos.units, expected_pos['units'])
+            self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+
+
 class TestFidelityInvestmentStatement(TestCase):
     def testForUnclosedTags(self):
         with open_file('fidelity.ofx') as f:
