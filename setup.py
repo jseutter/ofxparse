@@ -12,26 +12,11 @@ from setuptools import setup, find_packages
 VERSION = re.search(r"__version__ = '(.*?)'",
                     open("ofxparse/__init__.py").read()).group(1)
 
-# Use BeautifulSoup 3 on Python 2.5 and earlier and BeautifulSoup 4 otherwise
-if sys.version_info < (2, 6):
-    REQUIRES = [
-        "beautifulSoup>=3.0",
-    ]
-else:
-    REQUIRES = [
-        "beautifulsoup4",
-        "lxml",
-    ]
-
-if sys.version_info < (2, 7):
-    REQUIRES.extend([
-        "ordereddict>=1.1",
-    ])
-
-REQUIRES.extend([
+REQUIRES = [
+    "beautifulsoup4",
+    "lxml",
     'six',
-    'lxml'
-])
+]
 
 README = os.path.join(os.path.dirname(__file__), 'README.rst')
 
@@ -50,10 +35,11 @@ setup_params = dict(
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.5",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",

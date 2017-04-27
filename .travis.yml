@@ -1,16 +1,24 @@
 language: python
-
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install BeautifulSoup six nose coverage python-coveralls; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install BeautifulSoup4 six nose coverage python-coveralls; fi
-
+- if [[ $TRAVIS_PYTHON_VERSION == 2* ]]; then pip install BeautifulSoup six nose coverage
+  python-coveralls; fi
+- if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install BeautifulSoup4 six nose
+  coverage python-coveralls; fi
 script:
-  - nosetests
-
+- nosetests
 after_success:
-  - coveralls
+- coveralls
+deploy:
+  provider: pypi
+  user: jseutter
+  password:
+    secure: buE5iS5WhggpFcqR7iIEfcnDNHGeZ4zcYlgy3p9mJKEP8s7NMVeYJc+0FnnNs2fOEVR1QUX/URFtAZegtW9Bi/hVSc2bECZxM75uH342vqtea2rNJ7wQLSugUO+w9Q7HvC2KqeVl3s5Qa4Y3+mwv3Ej4tPI/WfASaNZG3XkwX4c=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: jseutter/ofxparse
