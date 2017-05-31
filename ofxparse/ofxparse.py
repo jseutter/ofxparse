@@ -347,6 +347,7 @@ class Position(object):
         self.security = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
+        self.market_value = decimal.Decimal(0)
 
 
 class Institution(object):
@@ -586,6 +587,9 @@ class OfxParser(object):
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
             position.unit_price = cls_.toDecimal(tag)
+        tag = ofx.find('mktval')
+        if (hasattr(tag, 'contents')):
+            position.market_value = cls_.toDecimal(tag)
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
             try:
@@ -684,7 +688,7 @@ class OfxParser(object):
                     if cls_.fail_fast:
                         raise
 
-        for transaction_type in ['posmf', 'posstock', 'posopt']:
+        for transaction_type in ['posmf', 'posstock', 'posopt', 'posother']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.positions.append(
