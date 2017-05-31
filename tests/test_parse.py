@@ -59,6 +59,11 @@ class TestOfxFile(TestCase):
                 self.assertTrue(type(data) is six.text_type)
                 self.assertHeadersTypes(headers)
 
+    def testTextStartsWithTag(self):
+        with open_file('anzcc.ofx', mode='r') as f:
+            ofx = OfxParser.parse(f)
+        self.assertEqual(ofx.account.number, '1234123412341234')
+
     def testUTF8(self):
         fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML

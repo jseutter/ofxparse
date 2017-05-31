@@ -71,9 +71,9 @@ class OfxFile(object):
 
         # If the file handler is text stream, convert to bytes one:
         first = self.fh.read(1)
+        self.fh.seek(0)
         if type(first) != bytes:
             self.fh = six.BytesIO(six.b(self.fh.read()))
-        self.fh.seek(0)
 
         with save_pos(self.fh):
             self.read_headers()
