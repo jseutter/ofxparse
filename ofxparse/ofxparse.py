@@ -1058,6 +1058,9 @@ class OfxParser(object):
     @classmethod
     def toDecimal(cls_, tag):
         d = tag.contents[0].strip()
+        # Handle 10,000.50 type of float values
+        if '.' in d and ',' in d:
+            d = d.replace(',', '')
         if '.' not in d and ',' in d:
             d = d.replace(',', '.')
         return decimal.Decimal(d)
