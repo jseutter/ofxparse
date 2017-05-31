@@ -469,8 +469,24 @@ class TestParseTransaction(TestCase):
 </STMTTRN>
 '''
         txn = soup_maker(input)
-        with self.assertRaises(OfxParserException):
-            transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('-1006.60'), transaction.amount)
+
+    def testThatParseTransactionWithDotAsDecimalPointAndCommaAsSeparator(self):
+        " The exact opposite of the previous test.  Why are numbers so hard?"
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>-1,006.60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('-1006.60'), transaction.amount)
 
     def testThatParseTransactionWithNullAmountIgnored(self):
         """A null transaction value is converted to 0.
