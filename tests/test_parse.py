@@ -59,6 +59,11 @@ class TestOfxFile(TestCase):
                 self.assertTrue(type(data) is six.text_type)
                 self.assertHeadersTypes(headers)
 
+    def testTextStartsWithTag(self):
+        with open_file('anzcc.ofx', mode='r') as f:
+            ofx = OfxParser.parse(f)
+        self.assertEqual(ofx.account.number, '1234123412341234')
+
     def testUTF8(self):
         fh = six.BytesIO(six.b("""OFXHEADER:100
 DATA:OFXSGML
@@ -469,8 +474,24 @@ class TestParseTransaction(TestCase):
 </STMTTRN>
 '''
         txn = soup_maker(input)
-        with self.assertRaises(OfxParserException):
-            transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('-1006.60'), transaction.amount)
+
+    def testThatParseTransactionWithDotAsDecimalPointAndCommaAsSeparator(self):
+        " The exact opposite of the previous test.  Why are numbers so hard?"
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>-1,006.60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('-1006.60'), transaction.amount)
 
     def testThatParseTransactionWithNullAmountIgnored(self):
         """A null transaction value is converted to 0.
@@ -574,6 +595,89 @@ class TestVanguard401kStatement(TestCase):
                           'MATCH')
 
 
+class TestTiaaCrefStatement(TestCase):
+    def testReadAccount(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'account_id'))
+        self.assertEqual(ofx.account.account_id, '111A1111 22B222 33C333')
+        self.assertTrue(hasattr(ofx.account, 'type'))
+        self.assertEqual(ofx.account.type, AccountType.Investment)
+
+    def testReadTransfer(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'transactions'))
+        self.assertEqual(len(ofx.account.statement.transactions), 1)
+        self.assertEqual(
+            ofx.account.statement.transactions[-1].id,
+            'TIAA#20170307160000.000[-4:EDT]160000.000[-4:EDT]'
+        )
+        self.assertEqual(
+            'transfer',
+            ofx.account.statement.transactions[-1].type
+        )
+
+    def testReadPositions(self):
+        with open_file('tiaacref.ofx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertTrue(hasattr(ofx, 'account'))
+        self.assertTrue(hasattr(ofx.account, 'statement'))
+        self.assertTrue(hasattr(ofx.account.statement, 'positions'))
+        expected_positions = [
+            {
+                'security': '222222126',
+                'units': Decimal('13.0763'),
+                'unit_price': Decimal('1.0000'),
+                'market_value': Decimal('13.0763')
+            },
+            {
+                'security': '222222217',
+                'units': Decimal('1.0000'),
+                'unit_price': Decimal('25.5785'),
+                'market_value': Decimal('25.5785')
+            },
+            {
+                'security': '222222233',
+                'units': Decimal('8.7605'),
+                'unit_price': Decimal('12.4823'),
+                'market_value': Decimal('109.3512')
+            },
+            {
+                'security': '222222258',
+                'units': Decimal('339.2012'),
+                'unit_price': Decimal('12.3456'),
+                'market_value': Decimal('4187.6423')
+            },
+            {
+                'security': '111111111',
+                'units': Decimal('543.71'),
+                'unit_price': Decimal('1'),
+                'market_value': Decimal('543.71')
+            },
+            {
+                'security': '333333200',
+                'units': Decimal('2.00'),
+                'unit_price': Decimal('10.00'),
+                'market_value': Decimal('20.00')
+            }
+        ]
+        self.assertEqual(
+            len(ofx.account.statement.positions),
+            len(expected_positions)
+        )
+        for pos, expected_pos in zip(
+                ofx.account.statement.positions, expected_positions
+        ):
+            self.assertEqual(pos.security, expected_pos['security'])
+            self.assertEqual(pos.units, expected_pos['units'])
+            self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+            self.assertEqual(pos.market_value, expected_pos['market_value'])
+
+
 class TestFidelityInvestmentStatement(TestCase):
     def testForUnclosedTags(self):
         with open_file('fidelity.ofx') as f:
@@ -582,6 +686,9 @@ class TestFidelityInvestmentStatement(TestCase):
         self.assertEqual(len(ofx.account.statement.positions), 6)
         self.assertEqual(
             ofx.account.statement.positions[0].units, Decimal('128.0'))
+        self.assertEqual(
+            ofx.account.statement.positions[0].market_value, Decimal('5231.36')
+        )
 
     def testSecurityListSuccess(self):
         with open_file('fidelity.ofx') as f:
@@ -660,19 +767,31 @@ class Test401InvestmentStatement(TestCase):
             self.assertEqual(txn.security, expected_txn['security'])
             self.assertEqual(txn.tferaction, expected_txn['tferaction'])
 
-        expected_positions = [{'security': 'FOO',
-                               'units': Decimal('17.604312'),
-                               'unit_price': Decimal('22.517211')},
-                              {'security': 'BAR',
-                               'units': Decimal('13.550983'),
-                               'unit_price': Decimal('29.214855')},
-                              {'security': 'BAZ',
-                               'units': Decimal('0.0'),
-                               'unit_price': Decimal('0.0')}]
+        expected_positions = [
+            {
+                'security': 'FOO',
+                'units': Decimal('17.604312'),
+                'unit_price': Decimal('22.517211'),
+                'market_value': Decimal('396.4')
+            },
+            {
+                'security': 'BAR',
+                'units': Decimal('13.550983'),
+                'unit_price': Decimal('29.214855'),
+                'market_value': Decimal('395.89')
+            },
+            {
+                'security': 'BAZ',
+                'units': Decimal('0.0'),
+                'unit_price': Decimal('0.0'),
+                'market_value': Decimal('0.0')
+            }
+        ]
         for pos, expected_pos in zip(ofx.account.statement.positions, expected_positions):
             self.assertEqual(pos.security, expected_pos['security'])
             self.assertEqual(pos.units, expected_pos['units'])
             self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+            self.assertEqual(pos.market_value, expected_pos['market_value'])
 
 
 class TestSuncorpBankStatement(TestCase):

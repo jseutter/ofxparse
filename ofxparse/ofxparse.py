@@ -22,13 +22,12 @@ else:
 
 from . import mcc
 
-def soup_maker(fh):
-    try:
-        from bs4 import BeautifulSoup
-        return BeautifulSoup(fh, 'html.parser')
-    except ImportError:
-        from BeautifulSoup import BeautifulStoneSoup
-        return BeautifulStoneSoup(fh)
+try:
+    from bs4 import BeautifulSoup
+    soup_maker = lambda fh: BeautifulSoup(fh, 'html.parser')
+except ImportError:
+    from BeautifulSoup import BeautifulStoneSoup
+    soup_maker = BeautifulStoneSoup
 
 
 def try_decode(string, encoding):
@@ -72,9 +71,9 @@ class OfxFile(object):
 
         # If the file handler is text stream, convert to bytes one:
         first = self.fh.read(1)
+        self.fh.seek(0)
         if type(first) != bytes:
             self.fh = six.BytesIO(six.b(self.fh.read()))
-        self.fh.seek(0)
 
         with save_pos(self.fh):
             self.read_headers()
@@ -348,6 +347,7 @@ class Position(object):
         self.security = ''
         self.units = decimal.Decimal(0)
         self.unit_price = decimal.Decimal(0)
+        self.market_value = decimal.Decimal(0)
 
 
 class Institution(object):
@@ -587,6 +587,9 @@ class OfxParser(object):
         tag = ofx.find('unitprice')
         if (hasattr(tag, 'contents')):
             position.unit_price = cls_.toDecimal(tag)
+        tag = ofx.find('mktval')
+        if (hasattr(tag, 'contents')):
+            position.market_value = cls_.toDecimal(tag)
         tag = ofx.find('dtpriceasof')
         if (hasattr(tag, 'contents')):
             try:
@@ -685,7 +688,7 @@ class OfxParser(object):
                     if cls_.fail_fast:
                         raise
 
-        for transaction_type in ['posmf', 'posstock', 'posopt']:
+        for transaction_type in ['posmf', 'posstock', 'posopt', 'posother']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.positions.append(
@@ -1058,6 +1061,13 @@ class OfxParser(object):
     @classmethod
     def toDecimal(cls_, tag):
         d = tag.contents[0].strip()
+        # Handle 10,000.50 formatted numbers
+        if re.search('.*\..*,', d):
+            d = d.replace('.', '')
+        # Handle 10.000,50 formatted numbers
+        if re.search('.*,.*\.', d):
+            d = d.replace(',', '')
+        # Handle 10000,50 formatted numbers
         if '.' not in d and ',' in d:
             d = d.replace(',', '.')
         return decimal.Decimal(d)
