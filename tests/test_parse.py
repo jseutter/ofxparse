@@ -810,6 +810,51 @@ class TestSuncorpBankStatement(TestCase):
             "EFTPOS WDL HANDYWAY ALDI STORE   GEELONG WEST VICAU")
         self.assertEqual(transaction.amount, Decimal("-16.85"))
 
+class TestTDAmeritrade(TestCase):
+    def testPositions(self):
+        with open_file('td_ameritrade.ofx') as f:
+            ofx = OfxParser.parse(f)
+        account = ofx.accounts[0]
+        statement = account.statement
+        positions = statement.positions
+        self.assertEquals(len(positions), 2)
+
+        expected_positions = [
+            {
+                'security': '023135106',
+                'units': Decimal('1'),
+                'unit_price': Decimal('1000'),
+                'market_value': Decimal('1000')
+            },
+            {
+                'security': '912810RW0',
+                'units': Decimal('1000'),
+                'unit_price': Decimal('100'),
+                'market_value': Decimal('1000')
+            }
+        ]
+        for pos, expected_pos in zip(positions, expected_positions):
+            self.assertEqual(pos.security, expected_pos['security'])
+            self.assertEqual(pos.units, expected_pos['units'])
+            self.assertEqual(pos.unit_price, expected_pos['unit_price'])
+            self.assertEqual(pos.market_value, expected_pos['market_value'])
+
+        expected_securities = [
+            {
+                'uniqueid': '023135106',
+                'ticker': 'AMZN',
+                'name': 'Amazon.com, Inc. - Common Stock'
+            },
+            {
+                'uniqueid': '912810RW0',
+                'ticker': '912810RW0',
+                'name': 'US Treasury 2047'
+            }
+        ]
+        for sec, expected_sec in zip(ofx.security_list, expected_securities):
+            self.assertEqual(sec.uniqueid, expected_sec['uniqueid'])
+            self.assertEqual(sec.ticker, expected_sec['ticker'])
+            self.assertEqual(sec.name, expected_sec['name'])
 
 class TestAccountInfoAggregation(TestCase):
     def testForFourAccounts(self):
