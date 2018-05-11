@@ -688,7 +688,7 @@ class OfxParser(object):
                     if cls_.fail_fast:
                         raise
 
-        for transaction_type in ['posmf', 'posstock', 'posopt', 'posother']:
+        for transaction_type in ['posmf', 'posstock', 'posopt', 'posother', 'posdebt']:
             try:
                 for investment_ofx in invstmtrs_ofx.findAll(transaction_type):
                     statement.positions.append(

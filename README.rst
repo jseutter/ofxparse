@@ -35,10 +35,9 @@ Here's a sample program
 Help!
 =====
 
-Sample ``.ofx`` and ``.qfx`` files are very useful.
-If you want to help us out, please edit
-all identifying information from the file and then email it to jseutter dot
-ofxparse at gmail dot com.
+Sample ``.ofx`` and ``.qfx`` files are very useful.  If you want to help us out,
+please edit all identifying information from the file and then email it to
+jseutter dot ofxparse at gmail dot com.
 
 Development
 ===========
