@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from ofxparse import OfxParser, OfxPrinter
 from unittest import TestCase
-from io import StringIO
+from six import StringIO
 from os import close, remove
 from tempfile import mkstemp
 import sys
