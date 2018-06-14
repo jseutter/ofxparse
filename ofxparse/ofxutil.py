@@ -1,16 +1,14 @@
 from __future__ import absolute_import, with_statement
 
 import os
-import copy
 import collections
 import xml.etree.ElementTree as ET
+import six
 
 if 'OrderedDict' in dir(collections):
     odict = collections
 else:
     import ordereddict as odict
-
-import six
 
 
 class InvalidOFXStructureException(Exception):
@@ -103,18 +101,18 @@ class OfxData(object):
         return len(self.nodes)
 
     def __str__(self):
-        return os.linesep.join("\t" * line[1] + line[0] for line \
-                               in self.format())
+        return os.linesep.join("\t" * line[1] + line[0] for line in
+                               self.format())
 
     def format(self):
         if self.data or not self.nodes:
             if self.tag.upper() == "OFX":
-                return [["<%s>%s</%s>" % (self.tag, self.data \
+                return [["<%s>%s</%s>" % (self.tag, self.data
                         if self.data else "", self.tag), 0]]
             return [["<%s>%s" % (self.tag, self.data), 0]]
         else:
             ret = [["<%s>" % self.tag, -1]]
-            for name, child in six.iteritems(self.nodes):
+            for _, child in six.iteritems(self.nodes):
                 if isinstance(child, OfxData):
                     ret.extend(child.format())
                 else:
@@ -138,7 +136,7 @@ class OfxUtil(OfxData):
                     ofx_data.lower().endswith('.ofx'):
                 self.parse(ofx_data)
             else:
-                self.parse(open(ofx_data).read() if isinstance(\
+                self.parse(open(ofx_data).read() if isinstance(
                     ofx_data, six.string_types) else ofx_data.read())
 
     def parse(self, ofx):
@@ -150,8 +148,6 @@ class OfxUtil(OfxData):
                 self.headers[header] = value
         except ValueError:
             pass
-        except:
-            raise
         finally:
             if "OFXHEADER" not in self.headers:
                 self.headers["OFXHEADER"] = "100"
@@ -219,10 +215,11 @@ class OfxUtil(OfxData):
             f.write(str(self))
 
     def __str__(self):
-        ret = os.linesep.join(":".join(line) for line in \
+        ret = os.linesep.join(":".join(line) for line in
                               six.iteritems(self.headers)) + os.linesep * 2
         ret += super(OfxUtil, self).__str__()
         return ret
+
 
 if __name__ == "__main__":
     here = os.path.dirname(__file__)

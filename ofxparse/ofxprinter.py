@@ -1,5 +1,6 @@
 import six
 
+
 class OfxPrinter():
     ofx = None
     out_filename = None
