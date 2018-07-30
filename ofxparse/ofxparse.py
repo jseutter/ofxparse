@@ -510,10 +510,10 @@ class OfxParser(object):
             else:
                 continue
 
-                fi_ofx = ofx.find('fi')
-                if fi_ofx:
-                    for account in ofx_obj.accounts:
-                        account.institution = cls_.parseOrg(fi_ofx)
+            fi_ofx = ofx.find('fi')
+            if fi_ofx:
+                for account in all_accounts:
+                    account.institution = cls_.parseOrg(fi_ofx)
 
             desc = i.find('desc')
             if hasattr(desc, 'contents'):
