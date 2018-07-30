@@ -178,19 +178,22 @@ class OfxPrinter():
         # No newline at end of file
         self.writeLine("</OFX>", tabs=tabs, term="")
 
-    def write(self, filename=None, tabs=0):
+    def writeToFile(self, fileObject, tabs=0):
         if self.out_handle:
             raise Exception("Already writing file")
 
-        if filename is None:
-            filename = self.out_filename
-
-        self.out_handle = open(filename, 'w')
+        self.out_handle = fileObject
 
         self.writeHeaders()
 
         self.writeOfx(tabs=tabs)
 
         self.out_handle.flush()
-        self.out_handle.close()
         self.out_handle = None
+
+    def write(self, filename=None, tabs=0):
+        if filename is None:
+            filename = self.out_filename
+
+        with open(filename, 'w') as f:
+            self.writeToFile(f)
