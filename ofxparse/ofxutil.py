@@ -197,7 +197,7 @@ class OfxUtil(OfxData):
 
             self.xml = ET.fromstringlist(tags)
             self.load_from_xml(self, self.xml)
-        except:
+        except Exception:
             raise InvalidOFXStructureException
 
     def load_from_xml(self, ofx, xml):

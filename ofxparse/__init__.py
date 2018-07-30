@@ -5,3 +5,12 @@ from .ofxparse import (OfxParser, OfxParserException, AccountType, Account,
 from .ofxprinter import OfxPrinter
 
 __version__ = '0.17'
+__all__ = [
+    'OfxParser',
+    'OfxParserException',
+    'AccountType',
+    'Account',
+    'Statement',
+    'Transaction',
+    'OfxPrinter'
+]

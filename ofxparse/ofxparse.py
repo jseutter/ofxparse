@@ -799,7 +799,7 @@ class OfxParser(object):
         for i in items:
             try:
                 idict[i] = sonrs.find(i).contents[0].strip()
-            except:
+            except Exception:
                 idict[i] = None
         idict['code'] = int(idict['code'])
         if idict['message'] is None:
