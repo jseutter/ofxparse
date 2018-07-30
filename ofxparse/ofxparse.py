@@ -362,7 +362,7 @@ class OfxParserException(Exception):
 
 class OfxParser(object):
     @classmethod
-    def parse(cls, file_handle, fail_fast=True):
+    def parse(cls_, file_handle, fail_fast=True, custom_date_format=None):
         '''
         parse is the main entry point for an OfxParser. It takes a file
         handle and an optional log_errors flag.
@@ -374,7 +374,8 @@ class OfxParser(object):
         that statements will include bad transactions (which are marked).
 
         '''
-        cls.fail_fast = fail_fast
+        cls_.fail_fast = fail_fast
+        cls_.custom_date_format = custom_date_format
 
         if not hasattr(file_handle, 'seek'):
             raise TypeError(six.u('parse() accepts a seek-able file handle\
@@ -485,7 +486,12 @@ class OfxParser(object):
             if ofxDateTime[:8] == "00000000":
                 return None
 
-            return datetime.datetime.strptime(ofxDateTime[:8], '%Y%m%d') - timeZoneOffset + msec
+            if not cls_.custom_date_format:
+                return datetime.datetime.strptime(
+                    ofxDateTime[:8], '%Y%m%d') - timeZoneOffset + msec
+            else:
+                return datetime.datetime.strptime(
+                    ofxDateTime[:8], cls_.custom_date_format) - timeZoneOffset + msec
 
     @classmethod
     def parseAcctinfors(cls, acctinfors_ofx, ofx):
