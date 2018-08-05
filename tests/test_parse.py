@@ -794,6 +794,41 @@ class Test401InvestmentStatement(TestCase):
             self.assertEqual(pos.market_value, expected_pos['market_value'])
 
 
+class TestEmptyTagsOFXv102(TestCase):
+    """ Test an OFX v1.02 file with the following empty fields:
+        * STMTRS.BANKACCTFROM.BRANCHID (optional according to spec)
+        * STMTRS.BANKACCTFROM.ACCTTYPE (mandatory)
+        * STMTRS.CURDEF (mandatory)
+        * STMTRS.BANKTRANLIST.STMTTRN.FITID
+        * STMTRS.BANKTRANLIST.STMTTRN.NAME
+        * STMTRS.BANKTRANLIST.STMTTRN.REFNUM (optional)
+        * STMTRS.BANKTRANLIST.STMTTRN.CHECKNUM (optional)
+        This file is from Newcastle Permanent in Australia
+    """
+    def testEmptyAccountTags(self):
+        with open_file('ofx-v102-empty-tags.ofx') as f:
+            ofx = OfxParser.parse(f, fail_fast=False)
+
+            account = ofx.accounts[0]
+
+            # Verify empty tags have empty values
+            self.assertEqual(account.branch_id, '')
+            self.assertEqual(account.account_type, '')
+            self.assertEqual(account.curdef, None)
+
+            # Verify non-empty tags are processed
+            self.assertEqual(account.account_id, "12345678")
+            # Bank-generated OFX uses org name in bankid field
+            self.assertEqual(account.routing_number, "NPBS")
+
+    def testMissingTransactionHeader(self):
+        with open_file('ofx-v102-empty-tags.ofx') as f:
+            ofx = OfxParser.parse(f, fail_fast=False)
+
+        # Empty currency definition
+        self.assertTrue(ofx.accounts[0].statement.warnings[0].startswith("Currency definition was empty for <stmtrs><curdef></curdef>"))
+
+
 class TestSuncorpBankStatement(TestCase):
     def testCDATATransactions(self):
         with open_file('suncorp.ofx') as f:
