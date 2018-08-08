@@ -814,19 +814,19 @@ class OfxParser(object):
         for stmtrs_ofx in stmtrs_list:
             account = Account()
             act_curdef = stmtrs_ofx.find('curdef')
-            if act_curdef:
+            if act_curdef and act_curdef.contents:
                 account.curdef = act_curdef.contents[0].strip()
             acctid_tag = stmtrs_ofx.find('acctid')
-            if hasattr(acctid_tag, 'contents'):
+            if acctid_tag and acctid_tag.contents:
                 account.account_id = acctid_tag.contents[0].strip()
             bankid_tag = stmtrs_ofx.find('bankid')
-            if hasattr(bankid_tag, 'contents'):
+            if bankid_tag and bankid_tag.contents:
                 account.routing_number = bankid_tag.contents[0].strip()
             branchid_tag = stmtrs_ofx.find('branchid')
-            if hasattr(branchid_tag, 'contents'):
+            if branchid_tag and branchid_tag.contents:
                 account.branch_id = branchid_tag.contents[0].strip()
             type_tag = stmtrs_ofx.find('accttype')
-            if hasattr(type_tag, 'contents'):
+            if type_tag and type_tag.contents:
                 account.account_type = type_tag.contents[0].strip()
             account.type = accountType
 
