@@ -1,57 +1,51 @@
-from ofxparse import OfxParser
+from ofxparse.ofxtodataframe import ofx_to_dataframe
 import pandas as pd
+from pandas import ExcelWriter
 
 import argparse
 
-# TODO automatically extract from transactions
-fields = ['id','type', 'date', 'memo', 'payee', 'amount', 'checknum', 'mcc']
-
+# ToDo: Remove duplicate transactions from different files
 parser = argparse.ArgumentParser(description='Convert multiple .qfx or .ofx to'
-                                             ' .xlsx.\n'
-                                             'Remove duplicate transactions '
-                                             'from different files.\n'
-                                             'use fixed columns:'
-                                             ' %s'%', '.join(fields))
+                                             ' .xlsx or csv.\n')
 parser.add_argument('files', metavar='*.ofx *.qfx', type=str, nargs='+',
-                   help='.qfx or .ofx file names')
-parser.add_argument('--start', type=str, metavar='2014-01-01',
-                    default='2014-01-01',
-                   help="Don't take transaction before this date")
-parser.add_argument('--end', type=str, metavar='2014-12-31',
-                    default='2014-12-31',
+help='.qfx or .ofx file names')
+parser.add_argument('--start', type=str, metavar='1700-01-01',
+                    default='1700-01-01',
+                    help="Don't take transaction before this date")
+parser.add_argument('--end', type=str, metavar='3000-12-31',
+                    default='3000-12-31',
                     help="Don't take transaction after this date")
-parser.add_argument('--output', metavar='output.xlsx', type=str,
-                    default='output.xlsx', help='Were to store the xlsx')
+parser.add_argument('-o', '--output', metavar='output.csv', type=str,
+                    default='output.csv', help='Were to store the output. Extension determines output format')
 parser.add_argument('--id-length', metavar='24', type=int, default=24,
-                   help='Truncate the number of digits in a transaction ID.'
-                        ' This is important because this program remove'
-                        ' transactions with duplicate IDs (after verifing'
-                        ' that they are identical.'
-                        ' If you feel unsafe then use a large number but'
-                        'usually the last digits of the transaction ID are'
-                        'running numbers which change from download to download'
-                        ' as a result you will have duplicate transactions'
-                        ' unless you truncate the ID.')
+                    help='Truncate the number of digits in a transaction ID.'
+                    ' This is important because this program remove'
+                    ' transactions with duplicate IDs (after verifing'
+                    ' that they are identical.'
+                    ' If you feel unsafe then use a large number but'
+                    'usually the last digits of the transaction ID are'
+                    'running numbers which change from download to download'
+                    ' as a result you will have duplicate transactions'
+                    ' unless you truncate the ID.')
 
 
 args = parser.parse_args()
 
+data = ofx_to_dataframe(args.files)
 
-data = {}
-for fname in args.files:
-    ofx = OfxParser.parse(file(fname))
-    for account in ofx.accounts:
-        df = data.get(account.number, pd.DataFrame(columns=fields+['fname']))
-        for transaction in account.statement.transactions:
-            s = pd.Series([getattr(transaction,f) for f in fields], index=fields)
-            s['fname'] = fname.split('/')[-1]
-            df = df.append(s, ignore_index=True)
-        df['id'] = df['id'].str[:args.id_length]  # clip the last part of the ID which changes from download to download
-        data[account.number] = df
+if 'csv' in args.output:
+    outstring = ""
+    for key,df in data.items():
+        outstring += "##### %s".format(key) + df.to_csv(None, index=False, header=True)
+    with open(args.output, 'w') as fileobj:
+        print(outstring, file=fileobj)
+elif 'xlsx' in args.output:
+    writer = pd.ExcelWriter(args.output)
+    for key,df in data.items():
+        df.to_excel(writer, sheet_name=key)
+    writer.save()
 
-print "Writing result to", args.output
-writer = pd.ExcelWriter(args.output)
-
+__dev_notes__ = '''
 for account_number, df in data.iteritems():
     # A transaction is identified using all `fields`
     # collapse all repeated transactions from the same file into one row
@@ -88,3 +82,4 @@ for account_number, df in data.iteritems():
     df2.to_excel(writer, account_number, index=False)
 
 writer.save()
+'''
