@@ -1,13 +1,18 @@
+#!/usr/bin/env python3
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+
 from ofxparse.ofxtodataframe import ofx_to_dataframe
 import pandas as pd
 from pandas import ExcelWriter
-
+import sys
 import argparse
+from io import StringIO
 
 # ToDo: Remove duplicate transactions from different files
 parser = argparse.ArgumentParser(description='Convert multiple .qfx or .ofx to'
                                              ' .xlsx or csv.\n')
-parser.add_argument('files', metavar='*.ofx *.qfx', type=str, nargs='+',
+parser.add_argument('files', type=argparse.FileType('r'), nargs='+',   #;metavar='*.ofx *.qfx', default=[], type=str, nargs='+',
 help='.qfx or .ofx file names')
 parser.add_argument('--start', type=str, metavar='1700-01-01',
                     default='1700-01-01',
@@ -30,13 +35,17 @@ parser.add_argument('--id-length', metavar='24', type=int, default=24,
 
 
 args = parser.parse_args()
-
+if 'stdin' in args.files[0].name:
+    fp=args.files[0]
+    args.files=[StringIO(fp.read())]
 data = ofx_to_dataframe(args.files)
 
 if 'csv' in args.output:
     outstring = ""
     for key,df in data.items():
-        outstring += "##### %s".format(key) + df.to_csv(None, index=False, header=True)
+        outstring += "##### {}\n".format(key) + df.to_csv(None, index=False, header=True)
+    if args.output=='output.csv':
+        print(outstring)
     with open(args.output, 'w') as fileobj:
         print(outstring, file=fileobj)
 elif 'xlsx' in args.output:
