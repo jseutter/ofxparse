@@ -981,6 +981,14 @@ class TestGracefulFailures(TestCase):
         with open_file('fail_nice/empty_balance.ofx') as f:
             self.assertRaises(OfxParserException, OfxParser.parse, f)
 
+    def testErrorInTransactionList(self):
+        """There is an error in the transaction list."""
+        with open_file('error_message.ofx') as f:
+            ofx = OfxParser.parse(f, False)
+        self.assertEqual(ofx.status['code'], 2000)
+        self.assertEqual(ofx.status['severity'], 'ERROR')
+        self.assertEqual(ofx.status['message'], 'General Server Error')
+
 
 class TestParseSonrs(TestCase):
 

@@ -411,6 +411,9 @@ class OfxParser(object):
                 )
                 ofx_obj.status['severity'] = \
                     stmttrnrs_status.find('severity').contents[0].strip()
+                message = stmttrnrs_status.find('message')
+                ofx_obj.status['message'] = \
+                    message.contents[0].strip() if message else None
 
         ccstmttrnrs = ofx.find('ccstmttrnrs')
         if ccstmttrnrs:
@@ -426,6 +429,9 @@ class OfxParser(object):
                 )
                 ofx_obj.status['severity'] = \
                     ccstmttrnrs_status.find('severity').contents[0].strip()
+                message = ccstmttrnrs_status.find('message')
+                ofx_obj.status['message'] = \
+                    message.contents[0].strip() if message else None
 
         stmtrs_ofx = ofx.findAll('stmtrs')
         if stmtrs_ofx:
