@@ -304,6 +304,7 @@ class Transaction(object):
         self.payee = ''
         self.type = ''
         self.date = None
+        self.user_date = None
         self.amount = None
         self.id = ''
         self.memo = ''
@@ -1024,6 +1025,19 @@ class OfxParser(object):
         else:
             raise OfxParserException(
                 six.u("Missing Transaction Date (a required field)"))
+
+        user_date_tag = txn_ofx.find('dtuser')
+        if hasattr(user_date_tag, "contents"):
+            try:
+                transaction.user_date = cls.parseOfxDateTime(
+                    user_date_tag.contents[0].strip())
+            except IndexError:
+                raise OfxParserException("Invalid Transaction User Date")
+            except ValueError:
+                ve = sys.exc_info()[1]
+                raise OfxParserException(str(ve))
+            except TypeError:
+                pass
 
         id_tag = txn_ofx.find('fitid')
         if hasattr(id_tag, "contents"):

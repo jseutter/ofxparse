@@ -73,6 +73,7 @@ Here's a sample program
     transaction.payee
     transaction.type
     transaction.date
+    transaction.user_date
     transaction.amount
     transaction.id
     transaction.memo

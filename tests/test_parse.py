@@ -415,6 +415,7 @@ class TestParseTransaction(TestCase):
         input = '''
 <STMTTRN>
  <TRNTYPE>POS
+ <DTUSER>20090131
  <DTPOSTED>20090401122017.000[-5:EST]
  <TRNAMT>-6.60
  <FITID>0000123456782009040100001
@@ -427,6 +428,7 @@ class TestParseTransaction(TestCase):
         self.assertEqual('pos', transaction.type)
         self.assertEqual(datetime(
             2009, 4, 1, 12, 20, 17) - timedelta(hours=-5), transaction.date)
+        self.assertEqual(datetime(2009, 1, 31, 0, 0), transaction.user_date)
         self.assertEqual(Decimal('-6.60'), transaction.amount)
         self.assertEqual('0000123456782009040100001', transaction.id)
         self.assertEqual("MCDONALD'S #112", transaction.payee)
