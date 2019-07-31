@@ -1079,4 +1079,8 @@ class OfxParser(object):
         # Handle 10000,50 formatted numbers
         if '.' not in d and ',' in d:
             d = d.replace(',', '.')
+        # Handle 1 025,53 formatted numbers
+        d = d.replace(' ', '')
+        # Handle +1058,53 formatted numbers
+        d = d.replace('+', '')
         return decimal.Decimal(d)
