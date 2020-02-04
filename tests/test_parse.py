@@ -493,6 +493,38 @@ class TestParseTransaction(TestCase):
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEqual(Decimal('-1006.60'), transaction.amount)
 
+    def testThatParseTransactionWithLeadingPlusSign(self):
+        " Parse numbers with a leading '+' sign. "
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>+1,006.60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('1006.60'), transaction.amount)
+
+    def testThatParseTransactionWithSpaces(self):
+        " Parse numbers with a space separating the thousands. "
+        input = '''
+<STMTTRN>
+ <TRNTYPE>POS
+ <DTPOSTED>20090401122017.000[-5:EST]
+ <TRNAMT>+1 006,60
+ <FITID>0000123456782009040100001
+ <NAME>MCDONALD'S #112
+ <MEMO>POS MERCHANDISE;MCDONALD'S #112
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual(Decimal('1006.60'), transaction.amount)
+
     def testThatParseTransactionWithNullAmountIgnored(self):
         """A null transaction value is converted to 0.
 
