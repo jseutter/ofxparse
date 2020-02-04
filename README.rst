@@ -32,7 +32,7 @@ Here's a sample program
 
   # Account
   
-  account = ofx.occount 
+  account = ofx.account 
   account.account_id        # The account number
   account.number            # The account number (deprecated -- returns account_id)
   account.routing_number    # The bank routing number
