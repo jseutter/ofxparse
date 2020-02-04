@@ -852,7 +852,7 @@ class TestTDAmeritrade(TestCase):
         account = ofx.accounts[0]
         statement = account.statement
         positions = statement.positions
-        self.assertEquals(len(positions), 2)
+        self.assertEqual(len(positions), 2)
 
         expected_positions = [
             {
