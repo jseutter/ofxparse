@@ -13,6 +13,11 @@ try:
 except ImportError:
     from io import StringIO
 
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+
 import six
 from . import mcc
 
@@ -37,7 +42,7 @@ def try_decode(string, encoding):
 def is_iterable(candidate):
     if sys.version_info < (2, 6):
         return hasattr(candidate, 'next')
-    return isinstance(candidate, collections.Iterable)
+    return isinstance(candidate, Iterable)
 
 
 @contextlib.contextmanager
