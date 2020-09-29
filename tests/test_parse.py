@@ -220,6 +220,12 @@ class TestParse(TestCase):
         self.assertEqual('CHECKING', ofx.accounts[0].account_type)
         self.assertEqual('SAVINGS', ofx.accounts[1].account_type)
 
+    def testChaseCCNonAscii(self):
+        with open_file('chase_cc.qfx') as f:
+            ofx = OfxParser.parse(f)
+        self.assertEqual(1, len(ofx.account.statement.transactions))
+        self.assertEqual(Decimal('-10.00'), ofx.account.statement.transactions[0].amount)
+
 
 class TestStringToDate(TestCase):
     ''' Test the string to date parser '''
