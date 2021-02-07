@@ -123,6 +123,24 @@ NEWFILEUID:NONE
         ofx_file = self.OfxFileCls(fh)
         self.assertEqual(len(ofx_file.headers.keys()), 2)
 
+    def testUSASCIICharsetNone(self):
+        fh = six.BytesIO(six.b("""OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:NONE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+"""))
+        ofx_file = self.OfxFileCls(fh)
+        headers = ofx_file.headers
+        result = ofx_file.fh.read()
+
+        self.assertTrue(type(result) is six.text_type)
+        self.assertHeadersTypes(headers)
+
 
 class TestOfxPreprocessedFile(TestOfxFile):
     OfxFileCls = OfxPreprocessedFile
