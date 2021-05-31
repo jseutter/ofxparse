@@ -90,7 +90,7 @@ class OfxFile(object):
         for line in head_data.splitlines():
             # Newline?
             if line.strip() == six.b(""):
-                break
+                continue
 
             header, value = line.split(six.b(":"))
             header, value = header.strip().upper(), value.strip()
