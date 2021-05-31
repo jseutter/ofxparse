@@ -16,6 +16,7 @@ after_success:
 - coveralls
 deploy:
   provider: pypi
+  edge: true
   user: jseutter
   password:
     secure: buE5iS5WhggpFcqR7iIEfcnDNHGeZ4zcYlgy3p9mJKEP8s7NMVeYJc+0FnnNs2fOEVR1QUX/URFtAZegtW9Bi/hVSc2bECZxM75uH342vqtea2rNJ7wQLSugUO+w9Q7HvC2KqeVl3s5Qa4Y3+mwv3Ej4tPI/WfASaNZG3XkwX4c=
