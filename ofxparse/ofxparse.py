@@ -319,6 +319,7 @@ class Transaction(object):
         self.sic = None
         self.mcc = ''
         self.checknum = ''
+        self.currate = 1
 
     def __repr__(self):
         return "<Transaction units=" + str(self.amount) + ">"
@@ -990,6 +991,16 @@ class OfxParser(object):
         if hasattr(memo_tag, "contents"):
             try:
                 transaction.memo = memo_tag.contents[0].strip()
+            except IndexError:
+                # Memo can be empty.
+                pass
+            except TypeError:
+                pass
+
+        currate_tag = txn_ofx.find('currate')
+        if hasattr(currate_tag, "contents"):
+            try:
+                transaction.currate = cls.toDecimal(currate_tag)
             except IndexError:
                 # Memo can be empty.
                 pass
