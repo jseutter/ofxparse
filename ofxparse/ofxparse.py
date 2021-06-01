@@ -124,6 +124,8 @@ class OfxFile(object):
             cp = ascii_headers.get("CHARSET", "1252")
             if cp == "8859-1":
                 encoding = "iso-8859-1"
+            elif cp == "NONE":
+                encoding = "1252"
             else:
                 encoding = "cp%s" % (cp, )
 
