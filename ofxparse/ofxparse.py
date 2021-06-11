@@ -85,14 +85,19 @@ class OfxFile(object):
 
     def read_headers(self):
         head_data = self.fh.read(1024 * 10)
+        # Headers end at the first XML tag (starting with '<')
         head_data = head_data[:head_data.find(six.b('<'))]
 
         for line in head_data.splitlines():
             # Newline?
             if line.strip() == six.b(""):
+                continue
+
+            header, sep, value = line.partition(six.b(":"))
+            if len(sep) == 0:
+                # No ':' separator found, we probably reached the end of the headers
                 break
 
-            header, value = line.split(six.b(":"))
             header, value = header.strip().upper(), value.strip()
 
             self.headers[header] = value
