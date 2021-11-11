@@ -12,7 +12,8 @@ import six
 from .support import open_file
 from ofxparse import OfxParser, AccountType, Account, Statement, Transaction
 from ofxparse.ofxparse import OfxFile, OfxPreprocessedFile, OfxParserException, soup_maker
-
+from ofxparse.ofxtodataframe import ofx_to_dataframe
+import glob
 
 class TestOfxFile(TestCase):
     OfxFileCls = OfxFile
@@ -1048,6 +1049,20 @@ class TestParseSonrs(TestCase):
         self.assertEqual(ofx.signon.code, 15500)
         self.assertEqual(ofx.signon.severity, 'ERROR')
         self.assertEqual(ofx.signon.message, 'Your request could not be processed because you supplied an invalid identification code or your password was incorrect')
+
+class TestOfxToDataFrame(TestCase):
+    def testSingleFile(self):
+        dfs = ofx_to_dataframe('tests/fixtures/fidelity.ofx')
+        self.assertEqual(sorted(dfs), ['InvestmentTransaction', 'Transaction'])
+        self.assertEqual(len(dfs['InvestmentTransaction']), 14)
+        self.assertEqual(len(dfs['Transaction']), 3)
+
+    def testMultipleFiles(self):
+        dfs = ofx_to_dataframe(['tests/fixtures/fidelity.ofx', 'tests/fixtures/investment_401k.ofx'])
+        self.assertEqual(sorted(dfs), ['InvestmentTransaction', 'Transaction'])
+        self.assertEqual(len(dfs['InvestmentTransaction']), 17)
+        self.assertEqual(len(dfs['Transaction']), 3)
+
 
 if __name__ == "__main__":
     import unittest
