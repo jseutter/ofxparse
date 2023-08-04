@@ -87,6 +87,26 @@ class OfxFile(object):
         head_data = self.fh.read(1024 * 10)
         head_data = head_data[:head_data.find(six.b('<'))]
 
+        # The header in a Wells Fargo checking .qfx file is missing all its newlines:
+        # 
+        # OFXHEADER:100DATA:OFXSGMLVERSION:102SECURITY:NONEENCODING:USASCIICHARSET:1252COMPRESSION:NONEOLDFILEUID:NONENEWFILEUID:NONE
+        # 
+        # When such a header is found, insert a newline before each known key.
+        # Unknown key:values will end up appended to the preceding value and
+        # throw "ValueError: too many values to unpack" on line.split below
+
+        if (head_data.count(six.b(':')) - head_data.count(six.b('\n'))) > 1:
+            head_data = head_data.replace(six.b('DATA'), six.b('\nDATA'), 1)
+            head_data = head_data.replace(six.b('VERSION'), six.b('\nVERSION'), 1)
+            head_data = head_data.replace(six.b('SECURITY'), six.b('\nSECURITY'), 1)
+            head_data = head_data.replace(six.b('ENCODING'), six.b('\nENCODING'), 1)
+            head_data = head_data.replace(six.b('CHARSET'), six.b('\nCHARSET'), 1)
+            head_data = head_data.replace(six.b('COMPRESSION'), six.b('\nCOMPRESSION'), 1)
+            head_data = head_data.replace(six.b('OLDFILEUID'), six.b('\nOLDFILEUID'), 1)
+            head_data = head_data.replace(six.b('NEWFILEUID'), six.b('\nNEWFILEUID'), 1)
+            while six.b('\n\n') in head_data:
+                head_data = head_data.replace(six.b('\n\n'), six.b('\n'))
+
         for line in head_data.splitlines():
             # Newline?
             if line.strip() == six.b(""):
