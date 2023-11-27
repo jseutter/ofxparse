@@ -1079,13 +1079,14 @@ class OfxParser(object):
                 if cls.fail_fast:
                     raise
 
-        checknum_tag = txn_ofx.find('checknum')
-        if hasattr(checknum_tag, 'contents'):
-            try:
-                transaction.checknum = checknum_tag.contents[0].strip()
-            except IndexError:
-                raise OfxParserException(six.u("Empty Check (or other reference) \
-                    number"))
+        for check_field in ('checknum', 'chknum'):
+            checknum_tag = txn_ofx.find(check_field)
+            if hasattr(checknum_tag, 'contents'):
+                try:
+                    transaction.checknum = checknum_tag.contents[0].strip()
+                except IndexError:
+                    raise OfxParserException(six.u("Empty Check (or other reference) \
+                        number"))
 
         return transaction
 

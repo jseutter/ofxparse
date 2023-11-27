@@ -449,6 +449,20 @@ class TestParseTransaction(TestCase):
         transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
         self.assertEqual('700', transaction.checknum)
 
+    def testThatParseTransactionWithFieldChkNum(self):
+        input = '''
+<STMTTRN>
+    <TRNTYPE>CHECK
+    <DTPOSTED>20231121
+    <TRNAMT>-113.71
+    <FITID>0000489
+    <CHKNUM>1932
+</STMTTRN>
+'''
+        txn = soup_maker(input)
+        transaction = OfxParser.parseTransaction(txn.find('stmttrn'))
+        self.assertEqual('1932', transaction.checknum)
+
     def testThatParseTransactionWithCommaAsDecimalPoint(self):
         input = '''
 <STMTTRN>
